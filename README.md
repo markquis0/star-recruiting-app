@@ -64,4 +64,3 @@ DB_PASSWORD=your_password
 ## License
 
 MIT
-
