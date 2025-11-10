@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Models\Candidate;
+use App\Models\Recruiter;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+
+class AuthController extends Controller
+{
+    public function register(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string|unique:users,username|max:255',
+            'password' => 'required|string|min:6',
+            'role' => 'required|in:candidate,recruiter',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => 'required_if:role,recruiter|nullable|email|unique:recruiters,email',
+            'role_title' => 'nullable|string|max:255',
+            'years_exp' => 'nullable|integer',
+            'company_name' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::create([
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+            'role' => $request->role,
+        ]);
+
+        if ($request->role === 'candidate') {
+            Candidate::create([
+                'user_id' => $user->id,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'role_title' => $request->role_title,
+                'years_exp' => $request->years_exp,
+            ]);
+        } else {
+            Recruiter::create([
+                'user_id' => $user->id,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'email' => $request->email,
+                'company_name' => $request->company_name,
+            ]);
+        }
+
+        $token = $user->createToken('StarRecruiting')->accessToken;
+
+        return response()->json([
+            'message' => 'Registration successful',
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'role' => $user->role,
+            ],
+        ], 201);
+    }
+
+    public function login(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = User::where('username', $request->username)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        $token = $user->createToken('StarRecruiting')->accessToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'role' => $user->role,
+            ],
+        ]);
+    }
+}
+
