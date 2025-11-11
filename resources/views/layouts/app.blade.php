@@ -498,7 +498,7 @@
                         <a class="nav-link" href="#" id="settings-link">Settings</a>
                     </li>
                     <li class="nav-item" id="nav-logout" style="display: none;">
-                        <a class="nav-link" href="#" onclick="handleLogout(); return false;">Logout</a>
+                        <a class="nav-link" href="#" onclick="handleLogout(event); return false;">Logout</a>
                     </li>
                 </ul>
             </div>
@@ -755,13 +755,31 @@
             }
         }
         
-        async function handleLogout() {
-            const confirmed = await showAppConfirm({
-                title: 'Logout',
-                message: 'Are you sure you want to logout?',
-                confirmLabel: 'Logout',
-                confirmVariant: 'danger',
-                variant: 'warning'
+        async function handleLogout(event) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            const confirmed = await showAppModal({
+                title: 'Ready to head out?',
+                message: `
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: rgba(240, 58, 111, 0.15); color: var(--accent-pink); font-size: 1.5rem;">
+                            <span class="fw-bold">⎋</span>
+                        </div>
+                        <div>
+                            <p class="mb-2">You’re about to sign out of Star Recruiting. Make sure any changes are saved before leaving.</p>
+                            <p class="mb-0 text-muted">You can log back in anytime to continue where you left off.</p>
+                        </div>
+                    </div>
+                `,
+                variant: 'warning',
+                closeValue: false,
+                buttons: [
+                    { label: 'Stay Logged In', variant: 'secondary', value: false },
+                    { label: 'Logout', variant: 'danger', value: true }
+                ],
+                allowOutsideClose: false
             });
 
             if (confirmed) {
