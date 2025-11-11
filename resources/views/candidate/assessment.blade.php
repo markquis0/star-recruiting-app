@@ -261,7 +261,7 @@
                 const message = result.message || (typeof result === 'string' ? result : JSON.stringify(result));
                 await showAppModal({
                     title: 'Submission Error',
-                    message: escapeHtml(message),
+                    message: message,
                     variant: 'danger'
                 });
             }

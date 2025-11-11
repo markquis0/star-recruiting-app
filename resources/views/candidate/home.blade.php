@@ -229,7 +229,8 @@
                 await showAppModal({
                     title: 'Unexpected Response',
                     message: '<pre class="mb-0">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>',
-                    variant: 'warning'
+                    variant: 'warning',
+                    renderHtml: true
                 });
             }
         } catch (error) {
@@ -256,7 +257,8 @@
                 const formatted = JSON.stringify(data.form.data || {}, null, 2);
                 await showAppModal({
                     title: 'Form Data',
-                    message: '<pre class="mb-0">' + escapeHtml(formatted) + '</pre>'
+                    message: '<pre class="mb-0">' + escapeHtml(formatted) + '</pre>',
+                    renderHtml: true
                 });
             }
         } catch (error) {

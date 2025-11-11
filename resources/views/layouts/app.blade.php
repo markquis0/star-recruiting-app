@@ -420,17 +420,27 @@
         }
 
         .app-modal-body {
-            padding: 1.5rem;
-            background: rgba(46, 26, 95, 0.65);
-            font-size: 0.95rem;
-            line-height: 1.7;
-            color: #e5e7ff;
+            padding: 1.75rem 1.75rem 0.5rem;
+            color: #2d3748;
+        }
+
+        .app-modal-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         .app-modal-body pre {
-            background: rgba(15, 10, 40, 0.6);
+            background: #f1f5f9;
             padding: 1rem;
             border-radius: 12px;
+            font-size: 0.85rem;
             color: #f3f4ff;
             overflow-x: auto;
         }
@@ -543,6 +553,38 @@
                 info: 'info'
             };
 
+            const VARIANT_STYLES = {
+                info: {
+                    icon: 'ℹ',
+                    color: 'var(--primary-purple)',
+                    background: 'rgba(63, 30, 111, 0.12)'
+                },
+                success: {
+                    icon: '✓',
+                    color: '#15803d',
+                    background: 'rgba(34, 197, 94, 0.18)'
+                },
+                warning: {
+                    icon: '⚠',
+                    color: '#b45309',
+                    background: 'rgba(245, 158, 11, 0.2)'
+                },
+                danger: {
+                    icon: '⛔',
+                    color: '#b91c1c',
+                    background: 'rgba(239, 68, 68, 0.2)'
+                }
+            };
+
+            function escapeForHtml(value) {
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
             function clearButtons() {
                 buttonsContainer.innerHTML = '';
             }
@@ -588,14 +630,30 @@
                     buttons = null,
                     onClose = null,
                     closeValue = null,
-                    allowOutsideClose = true
+                    allowOutsideClose = true,
+                    renderHtml = false
                 } = config || {};
 
                 currentResolve = resolve || null;
                 currentConfig = { onClose, closeValue, allowOutsideClose };
 
                 titleEl.textContent = title;
-                bodyEl.innerHTML = typeof message === 'string' ? message : '';
+                const variantStyle = VARIANT_STYLES[variant] || VARIANT_STYLES.info;
+
+                if (renderHtml) {
+                    bodyEl.innerHTML = typeof message === 'string' ? message : '';
+                } else {
+                    const normalized = escapeForHtml(message).replace(/\n/g, '<br>');
+                    bodyEl.innerHTML = `
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="app-modal-icon flex-shrink-0" style="background: ${variantStyle.background}; color: ${variantStyle.color};">
+                                <span>${variantStyle.icon}</span>
+                            </div>
+                            <div class="flex-grow-1">${normalized}</div>
+                        </div>
+                    `;
+                }
+
                 setVariant(variant);
 
                 clearButtons();
@@ -779,7 +837,8 @@
                     { label: 'Stay Logged In', variant: 'secondary', value: false },
                     { label: 'Logout', variant: 'danger', value: true }
                 ],
-                allowOutsideClose: false
+                allowOutsideClose: false,
+                renderHtml: true
             });
 
             if (confirmed) {
