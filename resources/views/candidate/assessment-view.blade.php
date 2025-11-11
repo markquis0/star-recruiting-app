@@ -109,7 +109,7 @@
                 `;
                 
                 if (assessment) {
-                    if (form.form_type === 'behavioral' && assessment.score_summary) {
+                    if (form.form_type === 'behavioral' && assessment.score_summary && !assessment.score_summary.categories) {
                         html += `
                             <div class="mb-4">
                                 <h5 style="font-size: 1rem; margin-bottom: 1rem;">Your Behavioral Profile</h5>
@@ -149,25 +149,64 @@
                             </div>
                         `;
                     } else if (form.form_type === 'aptitude') {
+                        const summary = assessment.score_summary || {};
+                        const categories = summary.categories || {};
+                        const overallAccuracy = summary.overall_accuracy ?? assessment.total_score;
+                        const profileSummary = summary.profile_summary || '';
+
                         html += `
                             <div class="mb-4">
                                 <h5 style="font-size: 1rem; margin-bottom: 1rem;">Your Aptitude Results</h5>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold" style="font-size: 0.875rem;">Category</label>
+                                        <label class="form-label fw-bold" style="font-size: 0.875rem;">Primary Strength</label>
                                         <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
-                                            <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.category || 'N/A'}</h4>
+                                            <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.category || 'Pending Review'}</h4>
                                         </div>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold" style="font-size: 0.875rem;">Score</label>
+                                        <label class="form-label fw-bold" style="font-size: 0.875rem;">Overall Accuracy</label>
                                         <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
-                                            <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.total_score || 0}%</h4>
+                                            <h4 class="mb-0" style="font-size: 1.25rem;">${overallAccuracy !== null && overallAccuracy !== undefined ? `${overallAccuracy}%` : 'Pending Review'}</h4>
                                         </div>
                                     </div>
                                 </div>
+                                ${profileSummary ? `<p class="text-muted mb-0">${profileSummary}</p>` : ''}
                             </div>
                         `;
+
+                        if (Object.keys(categories).length > 0) {
+                            html += `
+                                <div class="mb-4">
+                                    <h6 style="font-size: 0.9rem;" class="mb-3">Category Breakdown</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Category</th>
+                                                    <th>Accuracy</th>
+                                                    <th>Evaluated Questions</th>
+                                                    <th>Open Responses</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${Object.values(categories).map(category => {
+                                                    const accuracyText = category.accuracy !== null && category.accuracy !== undefined ? `${category.accuracy}%` : 'Pending review';
+                                                    return `
+                                                        <tr>
+                                                            <td>${category.label || 'Category'}</td>
+                                                            <td>${accuracyText}</td>
+                                                            <td>${category.evaluated_questions}</td>
+                                                            <td>${category.open_responses}</td>
+                                                        </tr>
+                                                    `;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            `;
+                        }
                     }
                     
                     // Show individual answers if available

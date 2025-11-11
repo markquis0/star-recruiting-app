@@ -13,6 +13,9 @@ class AssessmentQuestionSeeder extends Seeder
         $behavioral = AssessmentType::where('name', 'Behavioral')->first();
         $aptitude = AssessmentType::where('name', 'Aptitude')->first();
 
+        // Clear existing question sets to avoid duplicates when reseeding
+        AssessmentQuestion::where('assessment_type_id', $behavioral->id)->delete();
+
         // Behavioral Questions (Rating Scale 1-5)
         $behavioralQuestions = [
             // Analytical (1-5)
@@ -56,28 +59,177 @@ class AssessmentQuestionSeeder extends Seeder
             ]);
         }
 
-        // Aptitude Questions (Multiple Choice)
+        // Aptitude Questions (Multiple Choice + Open Text)
         $aptitudeQuestions = [
-            ['What is 15% of 200?', 'multiple_choice', ['A: 15', 'B: 30', 'C: 25', 'D: 20'], 'B'],
-            ['If a train travels 60 miles in 1 hour, how far will it travel in 3 hours?', 'multiple_choice', ['A: 120 miles', 'B: 180 miles', 'C: 200 miles', 'D: 240 miles'], 'B'],
-            ['What is the next number in the sequence: 2, 4, 8, 16, ?', 'multiple_choice', ['A: 24', 'B: 32', 'C: 28', 'D: 30'], 'B'],
-            ['If 3x + 5 = 20, what is x?', 'multiple_choice', ['A: 3', 'B: 5', 'C: 7', 'D: 10'], 'B'],
-            ['A rectangle has length 8 and width 5. What is its area?', 'multiple_choice', ['A: 13', 'B: 26', 'C: 40', 'D: 45'], 'C'],
-            ['What is 2^4?', 'multiple_choice', ['A: 8', 'B: 16', 'C: 32', 'D: 64'], 'B'],
-            ['If 20% of a number is 40, what is the number?', 'multiple_choice', ['A: 100', 'B: 200', 'C: 300', 'D: 400'], 'B'],
-            ['What is the average of 10, 20, 30, 40?', 'multiple_choice', ['A: 20', 'B: 25', 'C: 30', 'D: 35'], 'B'],
-            ['If a = 5 and b = 3, what is a² + b²?', 'multiple_choice', ['A: 34', 'B: 28', 'C: 16', 'D: 15'], 'A'],
-            ['What is 50% of 120?', 'multiple_choice', ['A: 50', 'B: 60', 'C: 70', 'D: 80'], 'B'],
+            // Category 1: Analytical / Logical Thinking (6)
+            [
+                'category' => 'analytical',
+                'text' => 'Pattern Recognition: Sequence 3, 6, 12, 24, ?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => '36', 'B' => '48', 'C' => '42', 'D' => '54'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'analytical',
+                'text' => 'Logic Puzzle: Three servers are connected. Server A can only send messages to Server C via Server B. What is the network topology?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Star', 'B' => 'Ring', 'C' => 'Bus', 'D' => 'Mesh'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'analytical',
+                'text' => 'Data Interpretation: Daily active users: 150, 180, 210, 240, 300. Approximate average daily growth rate?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => '5%', 'B' => '10%', 'C' => '15%', 'D' => '20%'],
+                'answer' => 'D',
+            ],
+            [
+                'category' => 'analytical',
+                'text' => 'Deductive Reasoning: If all engineers attend a tech talk, and Jane attends all tech talks, what can we conclude?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Jane is an engineer', 'B' => 'Jane might be an engineer', 'C' => 'Jane is not an engineer', 'D' => 'Cannot determine'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'analytical',
+                'text' => 'Abstract Reasoning: Which figure completes the series? (Refer to Figure Set A in the assessment.)',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Figure A', 'B' => 'Figure B', 'C' => 'Figure C', 'D' => 'Figure D'],
+                'answer' => 'C',
+            ],
+            [
+                'category' => 'analytical',
+                'text' => 'Algorithmic Thinking: You need to sort a list of 10,000 numbers efficiently. Which approach is best?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Bubble sort', 'B' => 'Quick sort', 'C' => 'Selection sort', 'D' => 'Insertion sort'],
+                'answer' => 'B',
+            ],
+
+            // Category 2: Creative / Conceptual Thinking (6)
+            [
+                'category' => 'creative',
+                'text' => 'Problem Reframing: Your company wants to reduce support tickets by 50% without hiring staff. What approach would you take?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Analogical Thinking: Which is most analogous to debugging software?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Gardening', 'B' => 'Cooking', 'C' => 'Solving a mystery', 'D' => 'Driving a car'],
+                'answer' => 'C',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Idea Generation: You have a study app. Name three unconventional ways to increase engagement.',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Conceptual Connection: Which two items are least related?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Cloud storage & Dropbox', 'B' => 'AI & Machine Learning', 'C' => 'Keyboard & Mouse', 'D' => 'Database & Solar Panel'],
+                'answer' => 'D',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Innovation Challenge: Imagine a meeting scheduling tool. How could you make it delight users in an unexpected way?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Visual Pattern Recognition: Which option completes the abstract shape sequence? (Refer to Figure Set B in the assessment.)',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Option A', 'B' => 'Option B', 'C' => 'Option C', 'D' => 'Option D'],
+                'answer' => 'B',
+            ],
+
+            // Category 3: Pragmatic / Execution-Oriented Thinking (7)
+            [
+                'category' => 'pragmatic',
+                'text' => 'Prioritization: You have three tasks—deploy a critical bug fix, update documentation, conduct team training. Which do you tackle first and why?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Scenario Analysis: A project is behind schedule. Options: cut a feature, extend the deadline, add resources, or negotiate scope. Your choice?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Cut feature', 'B' => 'Extend deadline', 'C' => 'Add resources', 'D' => 'Negotiate scope'],
+                'answer' => 'D',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Efficiency Assessment: A support issue keeps recurring. What do you address first?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Root cause', 'B' => 'Workaround', 'C' => 'User training', 'D' => 'Combination'],
+                'answer' => 'A',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Risk Assessment: You notice a minor bug shortly before release. Do you ship now or delay? Explain your decision.',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Process Optimization: You notice repetitive manual work in your team. How do you address it?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Decision under Constraint: Your budget is reduced by 20%. Which project adjustments do you prioritize?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Goal Setting: How would you plan your team’s work for a month-long sprint?',
+                'type' => 'open_text',
+            ],
+
+            // Category 4: Relational / Collaborative Thinking (6)
+            [
+                'category' => 'relational',
+                'text' => 'Conflict Resolution: Two engineers disagree on implementation details. How do you handle it?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'Communication Style: Explain a complex technical concept to a non-technical stakeholder. What approach do you take?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Step-by-step technical explanation', 'B' => 'Use analogies', 'C' => 'Provide a summary with visuals', 'D' => 'Delegate explanation'],
+                'answer' => 'C',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'Team Problem Solving: Someone proposes a flawed solution in a meeting. What do you do?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Critique openly', 'B' => 'Suggest alternatives', 'C' => 'Wait for others to respond', 'D' => 'Discuss privately later'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'Leadership Style: How would you encourage collaboration in a remote team?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'Feedback Reception: You receive feedback that your solution is inefficient. How do you respond?',
+                'type' => 'open_text',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'Interpersonal Influence: You need buy-in from multiple teams for a project. How do you approach it?',
+                'type' => 'open_text',
+            ],
         ];
 
         foreach ($aptitudeQuestions as $question) {
             AssessmentQuestion::create([
                 'assessment_type_id' => $aptitude->id,
-                'question_text' => $question[0],
-                'question_type' => $question[1],
-                'options' => json_encode($question[2]),
-                'correct_answer' => $question[3],
+                'question_text' => $question['text'],
+                'question_type' => $question['type'],
+                'options' => (array_key_exists('options', $question) && $question['options']) ? json_encode($question['options']) : null,
+                'correct_answer' => $question['answer'] ?? null,
                 'weight' => 1.0,
+                'trait' => $question['category'],
             ]);
         }
     }

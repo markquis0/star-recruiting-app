@@ -281,22 +281,61 @@
         if (!scoreSummary || typeof scoreSummary !== 'object') {
             return '';
         }
-        
-        const traits = {
+
+        // Behavioral structure (flat map of traits)
+        const isBehavioralSummary = Object.values(scoreSummary).every(value => typeof value === 'number');
+
+        if (isBehavioralSummary) {
+            const traits = {
+                'analytical': 'Analytical',
+                'collaborative': 'Collaborative',
+                'persistent': 'Persistent',
+                'social': 'Social'
+            };
+            let html = '<div class="mt-2"><small class="text-muted">Trait Scores:</small><div class="mt-1">';
+
+            Object.entries(scoreSummary).forEach(([trait, score]) => {
+                const traitName = traits[trait] || trait;
+                html += `<span class="badge bg-secondary me-1">${traitName}: ${score}%</span>`;
+            });
+
+            html += '</div></div>';
+            return html;
+        }
+
+        // Aptitude structure (categories + profile summary)
+        const categories = scoreSummary.categories || {};
+        const profileSummary = scoreSummary.profile_summary || '';
+        const categoryLabels = {
             'analytical': 'Analytical',
-            'collaborative': 'Collaborative',
-            'persistent': 'Persistent',
-            'social': 'Social'
+            'creative': 'Creative',
+            'pragmatic': 'Pragmatic',
+            'relational': 'Relational',
+            'general': 'General'
         };
-        
-        let html = '<div class="mt-2"><small class="text-muted">Trait Scores:</small><div class="mt-1">';
-        
-        Object.entries(scoreSummary).forEach(([trait, score]) => {
-            const traitName = traits[trait] || trait;
-            html += `<span class="badge bg-secondary me-1">${traitName}: ${score}%</span>`;
-        });
-        
-        html += '</div></div>';
+
+        let html = '<div class="mt-2">';
+
+        if (Object.keys(categories).length > 0) {
+            html += '<small class="text-muted">Category Insights:</small><div class="mt-1">';
+            Object.entries(categories).forEach(([key, data]) => {
+                const label = data.label || categoryLabels[key] || key;
+                const accuracy = data.accuracy !== null && data.accuracy !== undefined
+                    ? `${data.accuracy}%`
+                    : 'Pending review';
+                const openNotes = data.open_responses && data.open_responses > 0
+                    ? ` • ${data.open_responses} open response${data.open_responses > 1 ? 's' : ''}`
+                    : '';
+                html += `<div class="badge bg-secondary text-wrap me-1 mb-1">${label.split('/')[0].trim()}: ${accuracy}${openNotes}</div>`;
+            });
+            html += '</div>';
+        }
+
+        if (profileSummary) {
+            html += `<div class="mt-2"><small class="text-muted">Profile:</small><div>${profileSummary}</div></div>`;
+        }
+
+        html += '</div>';
         return html;
     }
     

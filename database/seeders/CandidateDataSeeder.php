@@ -272,39 +272,84 @@ class CandidateDataSeeder extends Seeder
             default => 0.65,
         };
 
+        $openResponseSamples = [
+            'analytical' => [
+                'I would outline assumptions, test each quickly, and validate the data before acting.',
+                'Start by mapping the logical flow, confirm dependencies, and quantify impact before deciding.'
+            ],
+            'creative' => [
+                'I would design an interactive onboarding that adapts to the user’s study style and schedule.',
+                'Introduce collaborative challenges with surprise rewards to keep learners curious and engaged.'
+            ],
+            'pragmatic' => [
+                'Stabilize production first, communicate the plan, and schedule knowledge sharing once risk is reduced.',
+                'I would capture the manual steps, automate the repetitive pieces, and document the new flow.'
+            ],
+            'relational' => [
+                'Facilitate a quick sync, surface the shared objective, and guide the team toward a combined solution.',
+                'Begin with appreciation for the feedback, ask clarifying questions, and iterate on the proposal together.'
+            ],
+        ];
+ 
         foreach ($questions as $question) {
-            $options = json_decode($question->options, true);
+            if ($question->question_type === 'open_text') {
+                $categoryKey = $question->trait ?? 'general';
+                $samples = $openResponseSamples[$categoryKey] ?? ['I would outline a plan and execute while keeping stakeholders informed.'];
+                $answerText = $samples[array_rand($samples)];
+
+                $answers[] = [
+                    'question_id' => $question->id,
+                    'answer' => $answerText,
+                    'score' => null,
+                ];
+                continue;
+            }
+
+            $options = $question->options ?? [];
+            if (!is_array($options) || empty($options)) {
+                $options = [];
+            }
+
+            // Normalize options to associative [letter => text]
+            $normalizedOptions = [];
+            foreach ($options as $key => $value) {
+                if (is_string($key) && strlen($key) === 1) {
+                    $normalizedOptions[$key] = $value;
+                } else {
+                    $letter = chr(ord('A') + count($normalizedOptions));
+                    $normalizedOptions[$letter] = $value;
+                }
+            }
+
             $correctAnswer = $question->correct_answer;
-            
+
             // Randomly answer correctly based on target score
             $shouldAnswerCorrectly = (rand(1, 100) / 100) < $targetScore;
-            
-            if ($shouldAnswerCorrectly && $correctAnswer) {
+
+            if ($shouldAnswerCorrectly && $correctAnswer && isset($normalizedOptions[$correctAnswer])) {
                 $answer = $correctAnswer;
                 $score = 1;
             } else {
-                // Pick a wrong answer
-                $wrongOptions = array_filter($options, function($opt) use ($correctAnswer) {
-                    return substr($opt, 0, 1) !== $correctAnswer;
+                $wrongOptions = array_filter(array_keys($normalizedOptions), function ($letter) use ($correctAnswer) {
+                    return $letter !== $correctAnswer;
                 });
+
                 if (!empty($wrongOptions)) {
-                    $wrongOptions = array_values($wrongOptions); // Re-index array
-                    $wrongOptionIndex = array_rand($wrongOptions);
-                    $answer = substr($wrongOptions[$wrongOptionIndex], 0, 1); // Get first letter
-                    $score = 0;
+                    $answer = $wrongOptions[array_rand($wrongOptions)];
                 } else {
-                    $answer = 'A'; // Fallback
-                    $score = 0;
+                    $answer = array_key_first($normalizedOptions) ?? 'A';
                 }
+
+                $score = ($answer === $correctAnswer) ? 1 : 0;
             }
-            
+
             $answers[] = [
                 'question_id' => $question->id,
                 'answer' => $answer,
                 'score' => $score,
             ];
         }
-
+ 
         return $answers;
     }
 }

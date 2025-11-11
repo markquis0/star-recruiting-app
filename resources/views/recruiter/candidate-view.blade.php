@@ -141,7 +141,7 @@
                                 <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0;"><strong>Review Count:</strong> ${behavioralForm.review_count || 0}</p>
                     `;
                     
-                    if (assessment.score_summary) {
+                    if (assessment.score_summary && !assessment.score_summary.categories) {
                         html += '<p class="mb-2 text-muted" style="font-size: 0.875rem;"><strong>Trait Scores:</strong></p><div class="row" style="gap: 0.5rem 0;">';
                         Object.entries(assessment.score_summary).forEach(([trait, score]) => {
                             html += `
@@ -164,37 +164,79 @@
                 const aptitudeForm = forms.find(f => f.form_type === 'aptitude' && f.assessment);
                 if (aptitudeForm && aptitudeForm.assessment) {
                     const assessment = aptitudeForm.assessment;
+                    const summary = assessment.score_summary || {};
+                    const categories = summary.categories || {};
+                    const profileSummary = summary.profile_summary || '';
+                    const overallAccuracy = summary.overall_accuracy ?? assessment.total_score;
+
                     html += `
                         <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 1rem 0;">
                         <h5 class="mt-4 mb-3" style="color: #FF3B6B; font-size: 1rem;">Aptitude Assessment</h5>
                         <div class="card mb-3">
                             <div class="card-body">
-                                <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.5rem;"><strong>Category:</strong> <span style="color: #FF3B6B;">${assessment.category || 'N/A'}</span></p>
-                                <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.5rem;"><strong>Score:</strong> <span style="color: #FF3B6B;">${assessment.total_score || 0}%</span></p>
+                                <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.5rem;"><strong>Primary Strength:</strong> <span style="color: #FF3B6B;">${assessment.category || 'Pending Review'}</span></p>
+                                <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.5rem;"><strong>Overall Accuracy:</strong> <span style="color: #FF3B6B;">${overallAccuracy !== null && overallAccuracy !== undefined ? `${overallAccuracy}%` : 'Pending review'}</span></p>
                                 <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.5rem;"><strong>Status:</strong> <span class="badge" style="background: ${aptitudeForm.status === 'submitted' ? '#10b981' : '#f59e0b'}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem;">${aptitudeForm.status}</span></p>
-                                <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0;"><strong>Review Count:</strong> ${aptitudeForm.review_count || 0}</p>
+                                <p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0.5rem;"><strong>Review Count:</strong> ${aptitudeForm.review_count || 0}</p>
+                                ${profileSummary ? `<p class="text-muted" style="font-size: 0.875rem; line-height: 1.6; margin-bottom: 0;">${profileSummary}</p>` : ''}
                             </div>
                         </div>
                     `;
-                    
-                    // Show answers if available
-                    if (assessment.answers && assessment.answers.length > 0) {
+
+                    if (Object.keys(categories).length > 0) {
                         html += `
                             <div class="card mb-3">
-                                <div class="card-header">
-                                    <h6>Assessment Answers</h6>
-                                </div>
                                 <div class="card-body">
+                                    <h6 style="font-size: 0.85rem;" class="mb-3">Category Breakdown</h6>
                                     <div class="table-responsive">
                                         <table class="table table-striped">
                                             <thead>
                                                 <tr>
-                                                    <th>Question</th>
-                                                    <th>Answer</th>
-                                                    <th>Result</th>
+                                                    <th>Category</th>
+                                                    <th>Accuracy</th>
+                                                    <th>Evaluated</th>
+                                                    <th>Open Responses</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                ${Object.values(categories).map(category => {
+                                                    const accuracyText = category.accuracy !== null && category.accuracy !== undefined ? `${category.accuracy}%` : 'Pending review';
+                                                    return `
+                                                        <tr>
+                                                            <td>${category.label || 'Category'}</td>
+                                                            <td>${accuracyText}</td>
+                                                            <td>${category.evaluated_questions}</td>
+                                                            <td>${category.open_responses}</td>
+                                                        </tr>
+                                                    `;
+                                                }).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Show answers if available
+                if (assessment.answers && assessment.answers.length > 0) {
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6>Assessment Answers</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Question</th>
+                                                <th>Answer</th>
+                                                <th>Result</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
                         `;
                         
                         assessment.answers.forEach((answer, index) => {
@@ -209,13 +251,12 @@
                         });
                         
                         html += `
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        `;
-                    }
+                        </div>
+                    `;
                 }
                 
                 // Save/Remove candidate button
