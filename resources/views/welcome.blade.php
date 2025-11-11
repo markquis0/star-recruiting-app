@@ -350,8 +350,8 @@
                 Empower your hiring process with intelligent matching, streamlined candidate management, and real-time insights.
             </p>
             <div class="hero-buttons">
-                <a href="/register" class="btn-hero-primary">Get Started</a>
-                <a href="#features" class="btn-hero-outline">Learn More</a>
+                <a href="/register" class="btn-hero-primary" id="hero-get-started">Get Started</a>
+                <a href="#features" class="btn-hero-outline" id="hero-learn-more">Learn More</a>
             </div>
         </div>
         <div class="hero-image">
@@ -398,6 +398,48 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('api_token');
+            const role = localStorage.getItem('user_role');
+
+            function resolveDashboardHref() {
+                if (role === 'candidate') return '/candidate/home';
+                if (role === 'recruiter') return '/recruiter/home';
+                return '/';
+            }
+
+            const getStartedBtn = document.getElementById('hero-get-started');
+            const learnMoreBtn = document.getElementById('hero-learn-more');
+
+            if (getStartedBtn) {
+                getStartedBtn.addEventListener('click', function(e) {
+                    if (!token) {
+                        return; // default /register
+                    }
+                    e.preventDefault();
+                    window.location.href = resolveDashboardHref();
+                });
+            }
+
+            if (learnMoreBtn) {
+                learnMoreBtn.addEventListener('click', function(e) {
+                    if (!token) {
+                        return; // keep default anchor behaviour
+                    }
+
+                    const destination = resolveDashboardHref();
+
+                    if (destination === '/') {
+                        return; // fallback to default anchor
+                    }
+
+                    e.preventDefault();
+                    window.location.href = destination;
+                });
+            }
+        });
+    </script>
 </body>
 </html>
 

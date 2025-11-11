@@ -491,6 +491,9 @@
                     <li class="nav-item" id="nav-register" style="display: none;">
                         <a class="nav-link" href="/register">Register</a>
                     </li>
+                    <li class="nav-item" id="nav-dashboard" style="display: none;">
+                        <a class="nav-link" href="#" id="dashboard-link">Dashboard</a>
+                    </li>
                     <li class="nav-item" id="nav-settings" style="display: none;">
                         <a class="nav-link" href="#" id="settings-link">Settings</a>
                     </li>
@@ -698,6 +701,8 @@
             const userRole = localStorage.getItem('user_role');
             const loginItem = document.getElementById('nav-login');
             const registerItem = document.getElementById('nav-register');
+            const dashboardItem = document.getElementById('nav-dashboard');
+            const dashboardLink = document.getElementById('dashboard-link');
             const settingsItem = document.getElementById('nav-settings');
             const settingsLink = document.getElementById('settings-link');
             const logoutItem = document.getElementById('nav-logout');
@@ -708,13 +713,18 @@
                 if (loginItem) loginItem.style.display = 'none';
                 if (registerItem) registerItem.style.display = 'none';
                 if (logoutItem) logoutItem.style.display = 'block';
+                if (dashboardItem) dashboardItem.style.display = 'block';
                 
                 // Update home link based on role
                 if (homeLink) {
                     if (userRole === 'candidate') {
                         homeLink.href = '/candidate/home';
+                        if (dashboardLink) dashboardLink.href = '/candidate/home';
                     } else if (userRole === 'recruiter') {
                         homeLink.href = '/recruiter/home';
+                        if (dashboardLink) dashboardLink.href = '/recruiter/home';
+                    } else if (dashboardItem) {
+                        dashboardItem.style.display = 'none';
                     }
                 }
                 
@@ -736,6 +746,7 @@
                 if (registerItem) registerItem.style.display = 'block';
                 if (logoutItem) logoutItem.style.display = 'none';
                 if (settingsItem) settingsItem.style.display = 'none';
+                if (dashboardItem) dashboardItem.style.display = 'none';
                 
                 // Set home link to welcome page
                 if (homeLink) {
