@@ -32,6 +32,15 @@
     if (!token) {
         window.location.href = '/login';
     }
+
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
     
     // Load questions for this assessment type
     async function loadQuestions() {
@@ -90,7 +99,7 @@
     function generateBehavioralQuestions(questions) {
         return questions.map((question, index) => `
             <div class="mb-4">
-                <label class="form-label">${index + 1}. ${question.question_text}</label>
+                <label class="form-label">${index + 1}. ${escapeHtml(question.question_text)}</label>
                 <select class="form-select" name="answers[${index}][answer]" required>
                     <option value="">Select rating...</option>
                     <option value="1">1 - Strongly Disagree</option>
@@ -139,7 +148,7 @@
 
             html += `
                 <div class="mt-4">
-                    <h4 class="text-info">${categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1)}</h4>
+                    <h4 class="text-info">${escapeHtml(categoryLabels[category] || (category.charAt(0).toUpperCase() + category.slice(1)))}</h4>
                 </div>
             `;
 
@@ -150,7 +159,7 @@
                 if (question.question_type === 'open_text') {
                     html += `
                         <div class="mb-4">
-                            <label class="form-label">${currentIndex + 1}. ${question.question_text}</label>
+                            <label class="form-label">${currentIndex + 1}. ${escapeHtml(question.question_text)}</label>
                             <textarea class="form-control" name="answers[${currentIndex}][answer]" rows="4" placeholder="Type your response" required></textarea>
                             <input type="hidden" name="answers[${currentIndex}][question_id]" value="${question.id}">
                         </div>
@@ -178,13 +187,13 @@
 
                     html += `
                         <div class="mb-4">
-                            <label class="form-label">${currentIndex + 1}. ${question.question_text}</label>
+                            <label class="form-label">${currentIndex + 1}. ${escapeHtml(question.question_text)}</label>
                             ${optionEntries.map(([letter, text], optIndex) => {
                                 const displayText = (typeof text === 'string' && (text.includes(':') || text.includes(')'))) ? text : `${letter}) ${text}`;
                                 return `
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="answers[${currentIndex}][answer]" id="q${currentIndex}_${optIndex}" value="${letter}" required>
-                                        <label class="form-check-label" for="q${currentIndex}_${optIndex}">${displayText}</label>
+                                        <label class="form-check-label" for="q${currentIndex}_${optIndex}">${escapeHtml(displayText)}</label>
                                     </div>
                                 `;
                             }).join('')}
@@ -242,14 +251,27 @@
             const result = await response.json();
             
             if (response.ok) {
-                alert('Assessment submitted successfully!');
+                await showAppModal({
+                    title: 'Assessment Submitted',
+                    message: 'Your assessment has been submitted successfully.',
+                    variant: 'success'
+                });
                 window.location.href = '/candidate/home';
             } else {
-                alert('Error: ' + (result.message || JSON.stringify(result)));
+                const message = result.message || (typeof result === 'string' ? result : JSON.stringify(result));
+                await showAppModal({
+                    title: 'Submission Error',
+                    message: escapeHtml(message),
+                    variant: 'danger'
+                });
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error submitting assessment: ' + error.message);
+            await showAppModal({
+                title: 'Submission Error',
+                message: error.message,
+                variant: 'danger'
+            });
         }
     });
     

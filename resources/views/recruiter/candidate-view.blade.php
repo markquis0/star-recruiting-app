@@ -324,63 +324,91 @@
         }
     }
     
-    function saveCandidate(candidateId) {
-        fetch('/api/recruiter/save', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ candidate_id: candidateId })
-        })
-        .then(response => {
+    async function saveCandidate(candidateId) {
+        try {
+            const response = await fetch('/api/recruiter/save', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ candidate_id: candidateId })
+            });
+
             if (response.ok) {
-                return response.json().then(data => {
-                    alert('Candidate saved successfully!');
-                    checkIfSaved(currentCandidateId); // Update button state
+                await response.json();
+                await showAppModal({
+                    title: 'Candidate Saved',
+                    message: 'Candidate saved successfully.',
+                    variant: 'success'
                 });
+                loadCandidateData();
             } else {
-                return response.json().then(data => {
-                    alert(data.message || 'Error saving candidate');
+                const data = await response.json();
+                await showAppModal({
+                    title: 'Save Candidate Failed',
+                    message: data.message || 'Unable to save candidate.',
+                    variant: 'danger'
                 });
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Error saving candidate: ' + error.message);
-        });
+            await showAppModal({
+                title: 'Save Candidate Failed',
+                message: error.message,
+                variant: 'danger'
+            });
+        }
     }
     
-    function removeSavedCandidate(savedCandidateIdToRemove) {
-        if (!confirm('Are you sure you want to remove this candidate from your saved list?')) {
+    async function removeSavedCandidate(savedCandidateIdToRemove) {
+        const confirmed = await showAppConfirm({
+            title: 'Remove Candidate',
+            message: 'Are you sure you want to remove this candidate from your saved list?',
+            confirmLabel: 'Remove',
+            confirmVariant: 'danger',
+            variant: 'warning'
+        });
+
+        if (!confirmed) {
             return;
         }
         
-        fetch(`/api/recruiter/save/${savedCandidateIdToRemove}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
+        try {
+            const response = await fetch(`/api/recruiter/save/${savedCandidateIdToRemove}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
             if (response.ok) {
-                return response.json().then(data => {
-                    alert('Candidate removed from saved list.');
-                    savedCandidateId = null;
-                    checkIfSaved(currentCandidateId); // Update button state
+                await response.json();
+                savedCandidateId = null;
+                await showAppModal({
+                    title: 'Candidate Removed',
+                    message: 'Candidate removed from your saved list.',
+                    variant: 'success'
                 });
+                checkIfSaved(currentCandidateId);
             } else {
-                return response.json().then(data => {
-                    alert(data.message || 'Error removing candidate');
+                const data = await response.json();
+                await showAppModal({
+                    title: 'Remove Candidate Failed',
+                    message: data.message || 'Unable to remove candidate.',
+                    variant: 'danger'
                 });
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Error removing candidate: ' + error.message);
-        });
+            await showAppModal({
+                title: 'Remove Candidate Failed',
+                message: error.message,
+                variant: 'danger'
+            });
+        }
     }
     
     function toggleSaveCandidate(candidateId) {

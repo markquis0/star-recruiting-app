@@ -51,98 +51,103 @@
 </div>
 
 <script>
-    // API token should be stored from login
     const token = localStorage.getItem('api_token');
     const userRole = localStorage.getItem('user_role');
-    
+
     if (!token) {
         window.location.href = '/login';
     }
-    
+
     if (userRole !== 'candidate') {
         window.location.href = '/recruiter/home';
     }
-    
-    function loadForms() {
-        fetch('/api/candidate/home', {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
+
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    async function loadForms() {
+        try {
+            const response = await fetch('/api/candidate/home', {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
             if (response.status === 401) {
                 window.location.href = '/login';
                 return;
             }
-            return response.json();
-        })
-        .then(data => {
-            if (!data) return;
+
+            const data = await response.json();
+            const forms = data.forms || [];
             const container = document.getElementById('forms-container');
-            
-            // Check which assessment types already exist and disable buttons
-            const hasBehavioral = data.forms && data.forms.some(f => f.form_type === 'behavioral');
-            const hasAptitude = data.forms && data.forms.some(f => f.form_type === 'aptitude');
-            
+
+            const hasBehavioral = forms.some(f => f.form_type === 'behavioral');
+            const hasAptitude = forms.some(f => f.form_type === 'aptitude');
             updateCreateButtons(hasBehavioral, hasAptitude);
-            
-            if (data.forms && data.forms.length > 0) {
-                container.innerHTML = data.forms.map(form => {
-                    const formType = form.form_type.charAt(0).toUpperCase() + form.form_type.slice(1);
-                    const statusBadge = form.status === 'submitted' ? 'success' : (form.status === 'reviewed' ? 'info' : 'warning');
-                    
-                    let actionButtons = '';
-                    
-                    if (form.status === 'incomplete') {
-                        if (form.form_type === 'project') {
-                            actionButtons = `<a href="/candidate/form/${form.id}" class="btn btn-sm btn-primary me-2">Fill Out</a>`;
-                        } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
-                            actionButtons = `<a href="/candidate/assessment/${form.id}?type=${form.form_type}" class="btn btn-sm btn-primary me-2">Take Assessment</a>`;
-                        }
-                    } else {
-                        if (form.form_type === 'project') {
-                            actionButtons = `<a href="/candidate/form/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
-                        } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
-                            actionButtons = `<a href="/candidate/assessment/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
-                        } else {
-                            actionButtons = `<button class="btn btn-sm btn-secondary me-2" onclick="viewForm(${form.id})">View</button>`;
-                        }
+
+            if (!forms.length) {
+                container.innerHTML = '<p>No forms yet. Create your first form using the buttons above!</p>';
+                return;
+            }
+
+            container.innerHTML = forms.map(form => {
+                const formType = form.form_type.charAt(0).toUpperCase() + form.form_type.slice(1);
+                const statusBadge = form.status === 'submitted' ? 'success' : (form.status === 'reviewed' ? 'info' : 'warning');
+
+                let actionButtons = '';
+
+                if (form.status === 'incomplete') {
+                    if (form.form_type === 'project') {
+                        actionButtons = `<a href="/candidate/form/${form.id}" class="btn btn-sm btn-primary me-2">Fill Out</a>`;
+                    } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
+                        actionButtons = `<a href="/candidate/assessment/${form.id}?type=${form.form_type}" class="btn btn-sm btn-primary me-2">Take Assessment</a>`;
                     }
-                    
-                    // Add delete button for all forms
-                    actionButtons += `<button class="btn btn-sm btn-danger" onclick="deleteForm(${form.id}, '${form.form_type}')">Delete</button>`;
-                    
-                    return `
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h5>${formType} Form</h5>
-                                        <p class="mb-1">Status: <span class="badge bg-${statusBadge}">${form.status}</span></p>
-                                        <p class="mb-1">Review Count: ${form.review_count}</p>
-                                        ${form.assessment ? `<p class="mb-1">Category: <strong>${form.assessment.category}</strong></p>` : ''}
-                                        ${form.assessment && form.assessment.total_score !== null ? `<p class="mb-1">Score: ${form.assessment.total_score}%</p>` : ''}
-                                        ${form.assessment && form.assessment.score_summary ? formatScoreSummary(form.assessment.score_summary) : ''}
-                                    </div>
-                                    <div>
-                                        ${actionButtons}
-                                    </div>
+                } else {
+                    if (form.form_type === 'project') {
+                        actionButtons = `<a href="/candidate/form/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
+                    } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
+                        actionButtons = `<a href="/candidate/assessment/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
+                    } else {
+                        actionButtons = `<button class="btn btn-sm btn-secondary me-2" onclick="viewForm(${form.id})">View</button>`;
+                    }
+                }
+
+                actionButtons += `<button class="btn btn-sm btn-danger" onclick="deleteForm(${form.id}, '${form.form_type}')">Delete</button>`;
+
+                return `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5>${formType} Form</h5>
+                                    <p class="mb-1">Status: <span class="badge bg-${statusBadge}">${form.status}</span></p>
+                                    <p class="mb-1">Review Count: ${form.review_count}</p>
+                                    ${form.assessment ? `<p class="mb-1">Category: <strong>${form.assessment.category}</strong></p>` : ''}
+                                    ${form.assessment && form.assessment.total_score !== null ? `<p class="mb-1">Score: ${form.assessment.total_score}%</p>` : ''}
+                                    ${form.assessment && form.assessment.score_summary ? formatScoreSummary(form.assessment.score_summary) : ''}
+                                </div>
+                                <div>
+                                    ${actionButtons}
                                 </div>
                             </div>
                         </div>
-                    `;
-                }).join('');
-            } else {
-                container.innerHTML = '<p>No forms yet. Create your first form using the buttons above!</p>';
-            }
-        })
-        .catch(error => {
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
             console.error('Error:', error);
             document.getElementById('forms-container').innerHTML = '<p class="text-danger">Error loading forms. Please login again.</p>';
-        });
+        }
     }
-    
+
     function updateCreateButtons(hasBehavioral, hasAptitude) {
         const behavioralBtn = document.getElementById('behavioral-btn');
         const aptitudeBtn = document.getElementById('aptitude-btn');
@@ -175,108 +180,143 @@
             }
         }
     }
-    
-    function createForm(formType) {
-        // Check if button is disabled
-        const btn = formType === 'behavioral' ? document.getElementById('behavioral-btn') : 
-                   formType === 'aptitude' ? document.getElementById('aptitude-btn') : null;
-        
+
+    async function createForm(formType) {
+        const btn = formType === 'behavioral' ? document.getElementById('behavioral-btn') :
+                    formType === 'aptitude' ? document.getElementById('aptitude-btn') : null;
+
         if (btn && btn.disabled) {
             const formTypeName = formType.charAt(0).toUpperCase() + formType.slice(1);
-            alert(`You already have a ${formTypeName} assessment. You can only create one.`);
+            await showAppModal({
+                title: `${formTypeName} Assessment Already Exists`,
+                message: `You already have a ${formTypeName.toLowerCase()} assessment. You can only create one.`,
+                variant: 'warning'
+            });
             return;
         }
-        
-        fetch('/api/candidate/form', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ form_type: formType })
-        })
-        .then(response => {
+
+        try {
+            const response = await fetch('/api/candidate/form', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ form_type: formType })
+            });
+
             if (response.status === 409) {
-                return response.json().then(data => {
-                    alert(data.message || 'You already have this type of assessment.');
-                    loadForms(); // Refresh to update button states
+                const data = await response.json();
+                await showAppModal({
+                    title: 'Assessment Already Exists',
+                    message: data.message || 'You already have this type of assessment.',
+                    variant: 'warning'
                 });
+                await loadForms();
+                return;
             }
-            return response.json();
-        })
-        .then(data => {
+
+            const data = await response.json();
             if (data.form) {
-                loadForms();
-                // Auto-redirect to the form page
+                await loadForms();
                 if (formType === 'project') {
                     window.location.href = `/candidate/form/${data.form.id}`;
                 } else {
                     window.location.href = `/candidate/assessment/${data.form.id}?type=${formType}`;
                 }
             } else if (!data.message) {
-                alert('Error: ' + JSON.stringify(data));
+                await showAppModal({
+                    title: 'Unexpected Response',
+                    message: '<pre class="mb-0">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>',
+                    variant: 'warning'
+                });
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Error creating form: ' + error.message);
-        });
+            await showAppModal({
+                title: 'Error Creating Form',
+                message: error.message,
+                variant: 'danger'
+            });
+        }
     }
-    
-    
-    function viewForm(formId) {
-        // For non-project forms, show in popup for now
-        fetch(`/api/candidate/form/${formId}`, {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
+
+    async function viewForm(formId) {
+        try {
+            const response = await fetch(`/api/candidate/form/${formId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
             if (data.form) {
-                alert('Form Data:\n' + JSON.stringify(data.form.data || {}, null, 2));
+                const formatted = JSON.stringify(data.form.data || {}, null, 2);
+                await showAppModal({
+                    title: 'Form Data',
+                    message: '<pre class="mb-0">' + escapeHtml(formatted) + '</pre>'
+                });
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Error loading form');
-        });
+            await showAppModal({
+                title: 'Error Loading Form',
+                message: error.message,
+                variant: 'danger'
+            });
+        }
     }
-    
-    function deleteForm(formId, formType) {
+
+    async function deleteForm(formId, formType) {
         const formTypeName = formType.charAt(0).toUpperCase() + formType.slice(1);
-        
-        if (!confirm(`Are you sure you want to delete this ${formTypeName} form? This action cannot be undone.`)) {
+        const confirmed = await showAppConfirm({
+            title: `Delete ${formTypeName} Form`,
+            message: 'This action cannot be undone. Do you want to continue?',
+            confirmLabel: 'Delete',
+            confirmVariant: 'danger',
+            variant: 'warning'
+        });
+
+        if (!confirmed) {
             return;
         }
-        
-        fetch(`/api/candidate/form/${formId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
+
+        try {
+            const response = await fetch(`/api/candidate/form/${formId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/json'
+                }
+            });
+
             if (response.ok) {
-                return response.json().then(data => {
-                    alert('Form deleted successfully!');
-                    loadForms(); // Reload the forms list (this will also update button states)
+                await loadForms();
+                await showAppModal({
+                    title: 'Form Deleted',
+                    message: `${formTypeName} form deleted successfully.`,
+                    variant: 'success'
                 });
             } else {
-                return response.json().then(data => {
-                    alert('Error: ' + (data.message || 'Failed to delete form'));
+                const data = await response.json();
+                await showAppModal({
+                    title: 'Error Deleting Form',
+                    message: data.message || 'Failed to delete form.',
+                    variant: 'danger'
                 });
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Error deleting form: ' + error.message);
-        });
+            await showAppModal({
+                title: 'Error Deleting Form',
+                message: error.message,
+                variant: 'danger'
+            });
+        }
     }
-    
+
     function formatScoreSummary(scoreSummary) {
         if (!scoreSummary || typeof scoreSummary !== 'object') {
             return '';
@@ -296,7 +336,7 @@
 
             Object.entries(scoreSummary).forEach(([trait, score]) => {
                 const traitName = traits[trait] || trait;
-                html += `<span class="badge bg-secondary me-1">${traitName}: ${score}%</span>`;
+                html += `<span class="badge bg-secondary me-1">${escapeHtml(traitName)}: ${score}%</span>`;
             });
 
             html += '</div></div>';
@@ -326,13 +366,14 @@
                 const openNotes = data.open_responses && data.open_responses > 0
                     ? ` • ${data.open_responses} open response${data.open_responses > 1 ? 's' : ''}`
                     : '';
-                html += `<div class="badge bg-secondary text-wrap me-1 mb-1">${label.split('/')[0].trim()}: ${accuracy}${openNotes}</div>`;
+                const safeLabel = escapeHtml((label.split('/')[0] || label).trim());
+                html += `<div class="badge bg-secondary text-wrap me-1 mb-1">${safeLabel}: ${accuracy}${openNotes}</div>`;
             });
             html += '</div>';
         }
 
         if (profileSummary) {
-            html += `<div class="mt-2"><small class="text-muted">Profile:</small><div>${profileSummary}</div></div>`;
+            html += `<div class="mt-2"><small class="text-muted">Profile:</small><div>${escapeHtml(profileSummary)}</div></div>`;
         }
 
         html += '</div>';

@@ -353,6 +353,99 @@
             transform: scale(1.01);
         }
 
+        body.app-modal-open {
+            overflow: hidden;
+        }
+
+        .app-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 7, 25, 0.68);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1.5rem;
+        }
+
+        .app-modal-overlay[data-visible="true"] {
+            display: flex;
+        }
+
+        .app-modal {
+            width: 100%;
+            max-width: 520px;
+            background: #1F0C4D;
+            color: #fff;
+            border-radius: 18px;
+            box-shadow: 0 30px 80px rgba(6, 0, 40, 0.55);
+            overflow: hidden;
+            transform: translateY(18px);
+            opacity: 0;
+            transition: all 0.22s ease;
+        }
+
+        .app-modal.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .app-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            background: var(--bg-gradient);
+        }
+
+        .app-modal-header.success { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); }
+        .app-modal-header.danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+        .app-modal-header.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .app-modal-header.info { background: var(--bg-gradient); }
+
+        .app-modal-close {
+            border: none;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.75rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+
+        .app-modal-close:hover {
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .app-modal-body {
+            padding: 1.5rem;
+            background: rgba(46, 26, 95, 0.65);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #e5e7ff;
+        }
+
+        .app-modal-body pre {
+            background: rgba(15, 10, 40, 0.6);
+            padding: 1rem;
+            border-radius: 12px;
+            color: #f3f4ff;
+            overflow-x: auto;
+        }
+
+        .app-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem 1.5rem;
+            background: rgba(30, 16, 70, 0.75);
+        }
+
+        .app-modal-footer .btn {
+            min-width: 110px;
+        }
 
         @media (max-width: 768px) {
             .navbar-brand {
@@ -412,6 +505,180 @@
     <div id="app-content">
         @yield('content')
     </div>
+
+    <div id="app-modal-overlay" class="app-modal-overlay" aria-hidden="true">
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="app-modal-title">
+            <div class="app-modal-header info" id="app-modal-header">
+                <h5 id="app-modal-title" class="mb-0">Notification</h5>
+                <button type="button" class="app-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="app-modal-body" id="app-modal-body"></div>
+            <div class="app-modal-footer" id="app-modal-buttons"></div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const overlay = document.getElementById('app-modal-overlay');
+            if (!overlay) {
+                return;
+            }
+
+            const modal = overlay.querySelector('.app-modal');
+            const header = document.getElementById('app-modal-header');
+            const titleEl = document.getElementById('app-modal-title');
+            const bodyEl = document.getElementById('app-modal-body');
+            const buttonsContainer = document.getElementById('app-modal-buttons');
+            const closeBtn = overlay.querySelector('.app-modal-close');
+
+            let currentResolve = null;
+            let currentConfig = null;
+
+            const VARIANT_CLASS = {
+                success: 'success',
+                danger: 'danger',
+                warning: 'warning',
+                info: 'info'
+            };
+
+            function clearButtons() {
+                buttonsContainer.innerHTML = '';
+            }
+
+            function setVariant(variant) {
+                const variantKey = VARIANT_CLASS[variant] ? variant : 'info';
+                header.className = `app-modal-header ${variantKey}`;
+            }
+
+            function hideModal(result = null) {
+                if (overlay.getAttribute('data-visible') !== 'true') {
+                    return;
+                }
+
+                modal.classList.remove('show');
+                overlay.setAttribute('data-visible', 'false');
+                overlay.setAttribute('aria-hidden', 'true');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 180);
+
+                document.body.classList.remove('app-modal-open');
+
+                const closeValue = (result === null || result === undefined) && currentConfig ? currentConfig.closeValue : result;
+
+                if (typeof currentConfig?.onClose === 'function') {
+                    currentConfig.onClose(closeValue);
+                }
+
+                if (currentResolve) {
+                    currentResolve(closeValue);
+                    currentResolve = null;
+                }
+
+                currentConfig = null;
+            }
+
+            function openModal(config, resolve) {
+                const {
+                    title = 'Notification',
+                    message = '',
+                    variant = 'info',
+                    buttons = null,
+                    onClose = null,
+                    closeValue = null,
+                    allowOutsideClose = true
+                } = config || {};
+
+                currentResolve = resolve || null;
+                currentConfig = { onClose, closeValue, allowOutsideClose };
+
+                titleEl.textContent = title;
+                bodyEl.innerHTML = typeof message === 'string' ? message : '';
+                setVariant(variant);
+
+                clearButtons();
+
+                const renderedButtons = Array.isArray(buttons) && buttons.length > 0
+                    ? buttons
+                    : [{ label: 'Close', variant: 'primary', value: closeValue }];
+
+                renderedButtons.forEach((button) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `btn btn-${button.variant || 'primary'}`;
+                    btn.textContent = button.label || 'Close';
+                    btn.addEventListener('click', () => {
+                        if (typeof button.onClick === 'function') {
+                            button.onClick();
+                        }
+                        if (button.dismiss !== false) {
+                            hideModal(button.value !== undefined ? button.value : closeValue);
+                        }
+                    });
+                    buttonsContainer.appendChild(btn);
+                });
+
+                overlay.style.display = 'flex';
+                overlay.setAttribute('data-visible', 'true');
+                overlay.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('app-modal-open');
+
+                requestAnimationFrame(() => {
+                    modal.classList.add('show');
+                });
+            }
+
+            function handleOverlayClick(event) {
+                if (event.target === overlay && currentConfig?.allowOutsideClose !== false) {
+                    hideModal(currentConfig?.closeValue ?? null);
+                }
+            }
+
+            function handleKeydown(event) {
+                if (event.key === 'Escape' && overlay.getAttribute('data-visible') === 'true') {
+                    hideModal(currentConfig?.closeValue ?? null);
+                }
+            }
+
+            closeBtn.addEventListener('click', () => hideModal(currentConfig?.closeValue ?? null));
+            overlay.addEventListener('click', handleOverlayClick);
+            document.addEventListener('keydown', handleKeydown);
+
+            window.showAppModal = function(config) {
+                return new Promise((resolve) => openModal(config, resolve));
+            };
+
+            window.hideAppModal = hideModal;
+
+            window.showAppConfirm = function(options = {}) {
+                const {
+                    title = 'Confirm Action',
+                    message = '',
+                    confirmLabel = 'Confirm',
+                    cancelLabel = 'Cancel',
+                    confirmVariant = 'danger',
+                    variant = 'info'
+                } = options;
+
+                return new Promise((resolve) => {
+                    openModal({
+                        title,
+                        message,
+                        variant,
+                        closeValue: false,
+                        buttons: [
+                            { label: cancelLabel, variant: 'secondary', value: false },
+                            { label: confirmLabel, variant: confirmVariant, value: true }
+                        ],
+                        onClose: (value) => resolve(Boolean(value))
+                    });
+                });
+            };
+
+            window.showAppMessage = function({ title = 'Notice', message = '', variant = 'info' } = {}) {
+                return window.showAppModal({ title, message, variant });
+            };
+        })();
+    </script>
     
     <script>
         // Add dashboard-page class to body if using dashboard layout
@@ -477,8 +744,16 @@
             }
         }
         
-        function handleLogout() {
-            if (confirm('Are you sure you want to logout?')) {
+        async function handleLogout() {
+            const confirmed = await showAppConfirm({
+                title: 'Logout',
+                message: 'Are you sure you want to logout?',
+                confirmLabel: 'Logout',
+                confirmVariant: 'danger',
+                variant: 'warning'
+            });
+
+            if (confirmed) {
                 localStorage.removeItem('api_token');
                 localStorage.removeItem('user_role');
                 window.location.href = '/';
