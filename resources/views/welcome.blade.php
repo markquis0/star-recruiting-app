@@ -336,7 +336,8 @@
             <a href="#features">Features</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
-            <a href="/login">Login</a>
+            <a href="/login" id="landing-login-link">Login</a>
+            <a href="/register" id="landing-register-link">Register</a>
         </div>
     </nav>
 
@@ -411,10 +412,21 @@
 
             const getStartedBtn = document.getElementById('hero-get-started');
             const learnMoreBtn = document.getElementById('hero-learn-more');
+            const landingLoginLink = document.getElementById('landing-login-link');
+            const landingRegisterLink = document.getElementById('landing-register-link');
+
+            if (!token) {
+                if (landingLoginLink) landingLoginLink.style.display = 'inline-block';
+                if (landingRegisterLink) landingRegisterLink.style.display = 'inline-block';
+            } else {
+                if (landingLoginLink) landingLoginLink.style.display = 'none';
+                if (landingRegisterLink) landingRegisterLink.style.display = 'none';
+            }
 
             if (getStartedBtn) {
                 getStartedBtn.addEventListener('click', function(e) {
                     if (!token) {
+                        if (landingRegisterLink) landingRegisterLink.style.display = 'inline-block';
                         return; // default /register
                     }
                     e.preventDefault();
@@ -425,6 +437,7 @@
             if (learnMoreBtn) {
                 learnMoreBtn.addEventListener('click', function(e) {
                     if (!token) {
+                        if (landingLoginLink) landingLoginLink.style.display = 'inline-block';
                         return; // keep default anchor behaviour
                     }
 
