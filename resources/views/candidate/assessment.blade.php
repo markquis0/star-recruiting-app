@@ -3,7 +3,7 @@
 @section('title', 'Take Assessment')
 
 @section('content')
-<div class="row">
+<div class="row px-3 px-lg-5">
     <div class="col-12">
         <h2 id="assessment-title">Assessment</h2>
         <div class="card">

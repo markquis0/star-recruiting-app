@@ -3,7 +3,7 @@
 @section('title', 'Settings - Recruiter')
 
 @section('content')
-<div class="row">
+<div class="row px-3 px-lg-5">
     <div class="col-12">
         <h2>Settings</h2>
         <div class="card">

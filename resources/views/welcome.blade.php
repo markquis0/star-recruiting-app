@@ -172,7 +172,8 @@
 
         .features-section {
             padding: 5rem 2.5rem;
-            background: #23005C;
+            background: rgba(34, 0, 77, 0.55);
+            text-align: center;
         }
 
         @media (min-width: 768px) {
@@ -182,16 +183,16 @@
         }
 
         .features-section h3 {
-            font-size: 2rem;
-            font-weight: 900;
-            text-align: center;
+            font-size: 2.25rem;
+            font-weight: 800;
             margin-bottom: 3rem;
+            color: #FF3B6B;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 2.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 2rem;
         }
 
         @media (min-width: 768px) {
@@ -201,11 +202,16 @@
         }
 
         .feature-card {
-            background: #2A2A5A;
-            border: none;
-            border-radius: 1rem;
+            background: rgba(17, 10, 40, 0.65);
+            border-radius: 20px;
             padding: 2rem;
-            color: white;
+            text-align: left;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
         }
 
         .feature-card h4 {
@@ -228,6 +234,44 @@
             font-size: 0.875rem;
             color: #9ca3af;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .about-section {
+            padding: 5rem 2.5rem;
+            background: linear-gradient(135deg, rgba(34, 0, 77, 0.85), rgba(58, 0, 120, 0.85));
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .about-section h3 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #FFB0D1;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .about-highlight {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #FF3B6B;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        .about-section strong {
+            color: #FFB0D1;
         }
 
         @keyframes fadeInUp {
@@ -274,6 +318,10 @@
             .features-section {
                 padding: 3rem 1.5rem;
             }
+
+            .about-section {
+                padding: 3rem 1.5rem;
+            }
         }
     </style>
 </head>
@@ -288,6 +336,7 @@
             <a href="#features">Features</a>
             <a href="#about">About</a>
             <a href="#contact">Contact</a>
+            <a href="/login">Login</a>
         </div>
     </nav>
 
@@ -326,6 +375,20 @@
                 <h4>Analytics Dashboard</h4>
                 <p>Get actionable insights on performance, pipeline, and hiring trends.</p>
             </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="about-content">
+            <div class="about-highlight">🌟 About Star Recruiting</div>
+            <p>Every great career starts with an opportunity — and every great hire begins with understanding the person behind the résumé.</p>
+            <p>Star Recruiting was created to make that understanding possible. We built it for the candidates who want to show what they’re truly capable of, and for the recruiters who want to see beyond bullet points and buzzwords.</p>
+            <p>Instead of relying solely on traditional applications, Star Recruiting brings together real-world projects, behavioral insights, and aptitude assessments — helping recruiters see how people think, create, and problem-solve.</p>
+            <p>We believe hiring should feel less like a transaction and more like a discovery — where both sides find alignment in purpose, potential, and personality.</p>
+            <p>Whether you’re a candidate hoping to stand out, or a recruiter searching for that rare perfect fit, Star Recruiting is designed to make the process more human, more transparent, and more meaningful.</p>
+            <div class="about-highlight">💫 Our Purpose</div>
+            <p>To make hiring personal again — through tools that reveal the story, the skills, and the spark behind every candidate.</p>
         </div>
     </section>
 

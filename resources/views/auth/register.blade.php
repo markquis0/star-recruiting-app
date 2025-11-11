@@ -3,7 +3,7 @@
 @section('title', 'Register - Star Recruiting')
 
 @section('content')
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-5">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">

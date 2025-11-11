@@ -3,7 +3,7 @@
 @section('title', 'Fill Out Form')
 
 @section('content')
-<div class="row">
+<div class="row px-3 px-lg-5">
     <div class="col-12">
         <h2>Project Form</h2>
         <div class="card">

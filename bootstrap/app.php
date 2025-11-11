@@ -17,9 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
 
-        $middleware->alias([
-            'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
