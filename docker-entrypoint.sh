@@ -1,7 +1,12 @@
 #!/bin/bash
-set -e
+set +e  # Don't exit on errors, we handle them explicitly
 
 echo "Starting Laravel application..."
+
+# Clear any existing caches first (may contain references to dev dependencies)
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan cache:clear || true
 
 # Generate app key if not set
 php artisan key:generate --force || true

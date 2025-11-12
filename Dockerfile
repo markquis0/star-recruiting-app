@@ -39,6 +39,12 @@ RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 # Copy application files
 COPY . .
 
+# Remove cached bootstrap files that may reference dev dependencies
+RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php || true
+
+# Regenerate autoloader now that all files are in place
+RUN composer dump-autoload --optimize --no-interaction --no-scripts
+
 # Build assets
 RUN npm run build
 
