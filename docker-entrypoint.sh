@@ -8,20 +8,45 @@ php artisan config:clear || true
 php artisan route:clear || true
 php artisan cache:clear || true
 
-# Generate app key if not set
-php artisan key:generate --force || true
+# Generate app key if not set (only if APP_KEY is empty)
+if [ -z "$APP_KEY" ]; then
+    echo "APP_KEY not set, generating new key..."
+    php artisan key:generate --force || echo "Failed to generate APP_KEY"
+else
+    echo "APP_KEY is set from environment"
+fi
+
+# Ensure storage directories exist and have proper permissions
+echo "Setting up storage directories..."
+mkdir -p storage/framework/cache/data
+mkdir -p storage/framework/sessions
+mkdir -p storage/framework/views
+mkdir -p storage/logs
+chmod -R 775 storage bootstrap/cache || true
 
 # Run migrations
+echo "Running migrations..."
 php artisan migrate --force || echo "Migration failed, continuing..."
 
 # Generate Passport keys if they don't exist
 if [ ! -f storage/oauth-private.key ]; then
+    echo "Generating Passport keys..."
     php artisan passport:keys --force || echo "Passport keys generation failed, continuing..."
 fi
 
-# Cache configuration
-php artisan config:cache || echo "Config cache failed, continuing..."
-php artisan route:cache || echo "Route cache failed, continuing..."
+# Cache configuration (only if no critical errors)
+echo "Caching configuration..."
+php artisan config:cache 2>&1 || {
+    echo "Config cache failed, clearing and retrying..."
+    php artisan config:clear
+    php artisan config:cache 2>&1 || echo "Config cache still failed, running without cache"
+}
+
+php artisan route:cache 2>&1 || {
+    echo "Route cache failed, clearing and retrying..."
+    php artisan route:clear
+    php artisan route:cache 2>&1 || echo "Route cache still failed, running without cache"
+}
 
 # Create storage link
 php artisan storage:link || true
