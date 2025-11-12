@@ -1,17 +1,17 @@
 # render.yaml
-# Blueprint for deploying Star Recruiting to Render using the Node runtime with a custom build script that installs PHP.
+# Blueprint for deploying Star Recruiting to Render using Docker.
 
 version: "1"
 
 services:
   - type: web
     name: star-recruiting-app
-    runtime: node
+    runtime: docker
     repo: https://github.com/markquis0/star-recruiting-app
     plan: free
     region: oregon
-    buildCommand: ./render-build.sh
-    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     autoDeploy: true
     envVars:
       - key: APP_NAME
