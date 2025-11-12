@@ -26,6 +26,10 @@ WORKDIR /var/www/html
 # Copy composer files
 COPY composer.json composer.lock ./
 
+# Create minimal .env for package discovery during build
+RUN echo "APP_KEY=base64:tmpkey" > .env && \
+    echo "APP_ENV=local" >> .env
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
