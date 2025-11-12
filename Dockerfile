@@ -30,11 +30,12 @@ COPY composer.json composer.lock ./
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Copy package files (package-lock.json is optional)
+COPY package.json ./
+COPY package-lock.json* ./
 
 # Install Node dependencies
-RUN npm ci
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # Copy application files
 COPY . .
