@@ -1,12 +1,12 @@
 # render.yaml
-# Blueprint for deploying Star Recruiting to Render with the native runtime.
+# Blueprint for deploying Star Recruiting to Render using the Node runtime with a custom build script that installs PHP.
 
 version: "1"
 
 services:
   - type: web
     name: star-recruiting-app
-    runtime: native
+    runtime: node
     repo: https://github.com/markquis0/star-recruiting-app
     plan: free
     region: oregon
