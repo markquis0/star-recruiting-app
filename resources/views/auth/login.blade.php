@@ -68,7 +68,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(data)
             });
             
-            const result = await response.json();
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                // If response is not JSON, it's likely a server error
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned an invalid response. Please try again.');
+            }
             
             if (response.ok) {
                 // Store token
@@ -98,8 +106,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 document.getElementById('login-success').style.display = 'none';
-                document.getElementById('login-error').innerHTML = result.message || 'Invalid credentials';
+                let errorMessage = result.message || 'An error occurred during login';
+                
+                // Show debug info if available
+                if (result.debug) {
+                    errorMessage += '<br><small class="text-muted">' + (typeof result.debug === 'string' ? result.debug : JSON.stringify(result.debug)) + '</small>';
+                }
+                
+                document.getElementById('login-error').innerHTML = errorMessage;
                 document.getElementById('login-error').style.display = 'block';
+                console.error('Login error response:', result);
             }
         } catch (error) {
             // Re-enable submit button on error

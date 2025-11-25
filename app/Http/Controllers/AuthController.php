@@ -57,27 +57,41 @@ class AuthController extends Controller
                 ]);
             }
 
-            // Check if Passport clients exist before creating token (Passport 13 uses grant_types)
-            $personalClientExists = DB::table('oauth_clients')
-                ->where('name', 'like', '%Personal Access Client%')
-                ->exists();
+            // Check if Passport personal access client exists and is properly linked
+            $personalAccessClient = DB::table('oauth_personal_access_clients')
+                ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
+                ->where('oauth_clients.name', 'like', '%Personal Access Client%')
+                ->first();
 
-            if (!$personalClientExists) {
+            if (!$personalAccessClient) {
                 Log::error('Passport Personal Access Client not found during registration. Attempting to create...');
                 // Try to create the client programmatically
                 try {
                     $clientRepository = app(\Laravel\Passport\ClientRepository::class);
-                    $clientRepository->createPersonalAccessClient(
+                    $client = $clientRepository->createPersonalAccessClient(
                         null,
                         'Star Recruiting Personal Access Client',
                         'http://localhost'
                     );
-                    Log::info('Passport Personal Access Client created successfully during registration');
+                    Log::info('Passport Personal Access Client created successfully during registration with ID: ' . $client->id);
+                    
+                    // Verify it was created properly
+                    $verifyClient = DB::table('oauth_personal_access_clients')
+                        ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
+                        ->where('oauth_clients.id', $client->id)
+                        ->first();
+                    
+                    if (!$verifyClient) {
+                        throw new \Exception('Personal access client created but not properly linked');
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Failed to create Passport client during registration: ' . $e->getMessage());
+                    Log::error('Failed to create Passport client during registration: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
                     return response()->json([
                         'message' => 'Authentication service not properly configured. Please contact support.',
-                        'error' => 'passport_client_missing'
+                        'error' => 'passport_client_missing',
+                        'debug' => config('app.debug') ? $e->getMessage() : null
                     ], 500);
                 }
             }
@@ -122,32 +136,73 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
-            // Check if Passport clients exist before creating token (Passport 13 uses grant_types)
-            $personalClientExists = DB::table('oauth_clients')
-                ->where('name', 'like', '%Personal Access Client%')
-                ->exists();
+            // Check if Passport personal access client exists and is properly linked
+            $personalAccessClient = DB::table('oauth_personal_access_clients')
+                ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
+                ->where('oauth_clients.name', 'like', '%Personal Access Client%')
+                ->first();
 
-            if (!$personalClientExists) {
-                Log::error('Passport Personal Access Client not found. Attempting to create...');
+            if (!$personalAccessClient) {
+                Log::error('Passport Personal Access Client not found or not properly linked. Attempting to create...');
                 // Try to create the client programmatically
                 try {
                     $clientRepository = app(\Laravel\Passport\ClientRepository::class);
-                    $clientRepository->createPersonalAccessClient(
+                    $client = $clientRepository->createPersonalAccessClient(
                         null,
                         'Star Recruiting Personal Access Client',
                         'http://localhost'
                     );
-                    Log::info('Passport Personal Access Client created successfully');
+                    Log::info('Passport Personal Access Client created successfully with ID: ' . $client->id);
+                    
+                    // Verify it was created properly
+                    $verifyClient = DB::table('oauth_personal_access_clients')
+                        ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
+                        ->where('oauth_clients.id', $client->id)
+                        ->first();
+                    
+                    if (!$verifyClient) {
+                        throw new \Exception('Personal access client created but not properly linked');
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Failed to create Passport client: ' . $e->getMessage());
+                    Log::error('Failed to create Passport client: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
                     return response()->json([
                         'message' => 'Authentication service not properly configured. Please contact support.',
-                        'error' => 'passport_client_missing'
+                        'error' => 'passport_client_missing',
+                        'debug' => config('app.debug') ? $e->getMessage() : null
                     ], 500);
                 }
             }
 
-            $token = $user->createToken('StarRecruiting')->accessToken;
+            // Create token with error handling
+            try {
+                $token = $user->createToken('StarRecruiting')->accessToken;
+            } catch (\Exception $tokenException) {
+                Log::error('Token creation failed: ' . $tokenException->getMessage(), [
+                    'trace' => $tokenException->getTraceAsString(),
+                    'user_id' => $user->id
+                ]);
+                
+                // Check if it's a Passport client issue
+                $clientCheck = DB::table('oauth_clients')
+                    ->where('name', 'like', '%Personal Access Client%')
+                    ->first();
+                
+                if (!$clientCheck) {
+                    return response()->json([
+                        'message' => 'Authentication service configuration error. Please contact support.',
+                        'error' => 'passport_client_missing',
+                        'debug' => config('app.debug') ? 'No Passport Personal Access Client found in database' : null
+                    ], 500);
+                }
+                
+                return response()->json([
+                    'message' => 'Failed to generate authentication token. Please try again.',
+                    'error' => 'token_creation_failed',
+                    'debug' => config('app.debug') ? $tokenException->getMessage() : null
+                ], 500);
+            }
 
             return response()->json([
                 'message' => 'Login successful',
@@ -160,11 +215,18 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Login error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ]);
             return response()->json([
                 'message' => 'An error occurred during login. Please try again.',
-                'error' => config('app.debug') ? $e->getMessage() : 'internal_error'
+                'error' => 'internal_error',
+                'debug' => config('app.debug') ? [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ] : null
             ], 500);
         }
     }
