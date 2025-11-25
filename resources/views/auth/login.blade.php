@@ -25,7 +25,7 @@
                     <div id="login-error" class="alert alert-danger" style="display: none;"></div>
                     <div id="login-success" class="alert alert-success" style="display: none;"></div>
                     
-                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                    <button type="submit" class="btn btn-primary w-100" id="login-submit-btn">Login</button>
                 </form>
                 
                 <div class="mt-3 text-center">
@@ -37,54 +37,83 @@
 </div>
 
 <script>
-document.getElementById('login-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('login-form');
     
-    const formData = new FormData(this);
-    const data = Object.fromEntries(formData);
-    
-    try {
-        const response = await fetch('/api/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        
-        const result = await response.json();
-        
-        if (response.ok) {
-            // Store token
-            localStorage.setItem('api_token', result.token);
-            localStorage.setItem('user_role', result.user.role);
-            
-            document.getElementById('login-error').style.display = 'none';
-            document.getElementById('login-success').innerHTML = 'Login successful! Redirecting...';
-            document.getElementById('login-success').style.display = 'block';
-            
-            // Redirect based on role
-            setTimeout(() => {
-                if (result.user.role === 'candidate') {
-                    window.location.href = '/candidate/home';
-                } else if (result.user.role === 'recruiter') {
-                    window.location.href = '/recruiter/home';
-                } else {
-                    // Unknown role, redirect to home
-                    window.location.href = '/';
-                }
-            }, 1500);
-        } else {
-            document.getElementById('login-success').style.display = 'none';
-            document.getElementById('login-error').innerHTML = result.message || 'Invalid credentials';
-            document.getElementById('login-error').style.display = 'block';
-        }
-    } catch (error) {
-        document.getElementById('login-success').style.display = 'none';
-        document.getElementById('login-error').innerHTML = 'An error occurred: ' + error.message;
-        document.getElementById('login-error').style.display = 'block';
+    if (!loginForm) {
+        console.error('Login form not found');
+        return;
     }
+    
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Disable submit button to prevent double submission
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Logging in...';
+        }
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Store token
+                localStorage.setItem('api_token', result.token);
+                localStorage.setItem('user_role', result.user.role);
+                
+                document.getElementById('login-error').style.display = 'none';
+                document.getElementById('login-success').innerHTML = 'Login successful! Redirecting...';
+                document.getElementById('login-success').style.display = 'block';
+                
+                // Redirect based on role
+                setTimeout(() => {
+                    if (result.user.role === 'candidate') {
+                        window.location.href = '/candidate/home';
+                    } else if (result.user.role === 'recruiter') {
+                        window.location.href = '/recruiter/home';
+                    } else {
+                        // Unknown role, redirect to home
+                        window.location.href = '/';
+                    }
+                }, 1500);
+            } else {
+                // Re-enable submit button on error
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Login';
+                }
+                
+                document.getElementById('login-success').style.display = 'none';
+                document.getElementById('login-error').innerHTML = result.message || 'Invalid credentials';
+                document.getElementById('login-error').style.display = 'block';
+            }
+        } catch (error) {
+            // Re-enable submit button on error
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Login';
+            }
+            
+            document.getElementById('login-success').style.display = 'none';
+            document.getElementById('login-error').innerHTML = 'An error occurred: ' + error.message;
+            document.getElementById('login-error').style.display = 'block';
+            console.error('Login error:', error);
+        }
+    });
 });
 </script>
 @endsection
