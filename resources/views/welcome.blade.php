@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome - Star Recruiting</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ secure_asset('images/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ secure_asset('images/favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -329,7 +329,7 @@
     <!-- Navbar -->
     <nav class="landing-navbar">
         <a href="/" class="landing-navbar-brand">
-            <img src="{{ asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" onerror="this.style.display='none';">
+            <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" onerror="this.style.display='none';">
             <h1>star recruiting</h1>
         </a>
         <div class="landing-navbar-links">
@@ -356,7 +356,7 @@
             </div>
         </div>
         <div class="hero-image">
-            <img src="{{ asset('images/illustration-hiring.png') }}" alt="Recruiting illustration" onerror="this.style.display='none';">
+            <img src="{{ secure_asset('images/illustration-hiring.png') }}" alt="Recruiting illustration" onerror="this.style.display='none';">
         </div>
     </section>
 

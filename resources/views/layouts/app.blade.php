@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Star Recruiting')</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="icon" type="image/png" href="{{ secure_asset('images/favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ secure_asset('images/favicon.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -487,7 +487,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/" id="home-link">
-                <img src="{{ asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" id="logo-img" style="height: 40px; width: auto;" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='inline';">
+                <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" id="logo-img" style="height: 40px; width: auto;" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='inline';">
                 <span id="logo-text" style="display: none;">star recruiting</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

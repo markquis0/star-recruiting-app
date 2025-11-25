@@ -7,7 +7,7 @@
     <!-- Sidebar -->
     <aside class="dashboard-sidebar">
         <div class="dashboard-sidebar-brand">
-            <img src="{{ asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" onerror="this.style.display='none';">
+            <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" onerror="this.style.display='none';">
             <h1>star recruiting</h1>
         </div>
         <nav class="dashboard-sidebar-nav">
