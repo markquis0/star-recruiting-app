@@ -120,33 +120,44 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
+        Log::info('=== LOGIN START ===', ['username' => $request->username]);
+        
         try {
+            Log::info('Login: Starting validation');
             $validator = Validator::make($request->all(), [
                 'username' => 'required|string',
                 'password' => 'required|string',
             ]);
 
             if ($validator->fails()) {
+                Log::info('Login: Validation failed', ['errors' => $validator->errors()]);
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
+            Log::info('Login: Querying user from database');
             $user = User::where('username', $request->username)->first();
+            Log::info('Login: User query completed', ['user_found' => $user !== null, 'user_id' => $user ? $user->id : null]);
 
             if (!$user || !Hash::check($request->password, $user->password)) {
+                Log::info('Login: Invalid credentials');
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
+            Log::info('Login: Checking Passport client');
             // Check if Passport personal access client exists and is properly linked
             $personalAccessClient = DB::table('oauth_personal_access_clients')
                 ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
                 ->where('oauth_clients.name', 'like', '%Personal Access Client%')
                 ->first();
+            
+            Log::info('Login: Passport client check completed', ['client_exists' => $personalAccessClient !== null, 'client_id' => $personalAccessClient ? $personalAccessClient->client_id : null]);
 
             if (!$personalAccessClient) {
                 Log::error('Passport Personal Access Client not found or not properly linked. Attempting to create...');
                 // Try to create the client programmatically
                 try {
                     $clientRepository = app(\Laravel\Passport\ClientRepository::class);
+                    Log::info('Login: Creating Passport client');
                     $client = $clientRepository->createPersonalAccessClient(
                         null,
                         'Star Recruiting Personal Access Client',
@@ -163,6 +174,7 @@ class AuthController extends Controller
                     if (!$verifyClient) {
                         throw new \Exception('Personal access client created but not properly linked');
                     }
+                    Log::info('Login: Passport client verified successfully');
                 } catch (\Exception $e) {
                     Log::error('Failed to create Passport client: ' . $e->getMessage(), [
                         'trace' => $e->getTraceAsString()
@@ -175,13 +187,16 @@ class AuthController extends Controller
                 }
             }
 
+            Log::info('Login: Creating token');
             // Create token with error handling
             try {
                 $token = $user->createToken('StarRecruiting')->accessToken;
+                Log::info('Login: Token created successfully');
             } catch (\Exception $tokenException) {
                 Log::error('Token creation failed: ' . $tokenException->getMessage(), [
                     'trace' => $tokenException->getTraceAsString(),
-                    'user_id' => $user->id
+                    'user_id' => $user->id,
+                    'exception_class' => get_class($tokenException)
                 ]);
                 
                 // Check if it's a Passport client issue
@@ -190,6 +205,7 @@ class AuthController extends Controller
                     ->first();
                 
                 if (!$clientCheck) {
+                    Log::error('Login: No Passport client found after token creation failure');
                     return response()->json([
                         'message' => 'Authentication service configuration error. Please contact support.',
                         'error' => 'passport_client_missing',
@@ -204,6 +220,7 @@ class AuthController extends Controller
                 ], 500);
             }
 
+            Log::info('Login: Success, returning response', ['user_id' => $user->id, 'role' => $user->role]);
             return response()->json([
                 'message' => 'Login successful',
                 'token' => $token,
@@ -217,7 +234,8 @@ class AuthController extends Controller
             Log::error('Login error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'exception_class' => get_class($e)
             ]);
             return response()->json([
                 'message' => 'An error occurred during login. Please try again.',

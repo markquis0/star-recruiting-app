@@ -5,6 +5,39 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\RecruiterController;
 
+// Health Check Routes (for debugging)
+Route::get('/health-db', function () {
+    try {
+        \DB::connection()->getPdo();
+        return response()->json(['ok' => true, 'db' => 'connected']);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+Route::get('/health-passport', function () {
+    try {
+        $client = \DB::table('oauth_personal_access_clients')
+            ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
+            ->where('oauth_clients.name', 'like', '%Personal Access Client%')
+            ->first();
+        
+        return response()->json([
+            'ok' => true,
+            'passport_client_exists' => $client !== null,
+            'client_id' => $client ? $client->client_id : null
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+});
+
 // Authentication Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
