@@ -24,6 +24,10 @@ mkdir -p storage/framework/views
 mkdir -p storage/logs
 chmod -R 775 storage bootstrap/cache || true
 
+# Test database connection
+echo "Testing database connection..."
+php artisan db:show || echo "Database connection test failed, but continuing..."
+
 # Run migrations
 echo "Running migrations..."
 php artisan migrate --force || echo "Migration failed, continuing..."
@@ -33,6 +37,45 @@ if [ ! -f storage/oauth-private.key ]; then
     echo "Generating Passport keys..."
     php artisan passport:keys --force || echo "Passport keys generation failed, continuing..."
 fi
+
+# Ensure Passport OAuth clients exist (required for createToken)
+echo "Checking Passport OAuth clients..."
+php -r "
+require __DIR__ . '/vendor/autoload.php';
+\$app = require_once __DIR__ . '/bootstrap/app.php';
+\$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+try {
+    if (!DB::table('oauth_clients')->where('name', 'Laravel Personal Access Client')->exists()) {
+        echo 'Creating Personal Access Client...' . PHP_EOL;
+        \$clientId = (string) Str::uuid();
+        \$clientSecret = Str::random(40);
+        DB::table('oauth_clients')->insert([
+            'id' => \$clientId,
+            'name' => 'Laravel Personal Access Client',
+            'secret' => \$clientSecret,
+            'redirect' => 'http://localhost',
+            'personal_access_client' => 1,
+            'password_client' => 0,
+            'revoked' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('oauth_personal_access_clients')->insert([
+            'client_id' => \$clientId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        echo 'Personal Access Client created successfully.' . PHP_EOL;
+    } else {
+        echo 'Personal Access Client already exists.' . PHP_EOL;
+    }
+} catch (Exception \$e) {
+    echo 'Error checking/creating Passport clients: ' . \$e->getMessage() . PHP_EOL;
+}
+" || echo "Failed to check/create Passport clients, continuing..."
 
 # Cache configuration (only if no critical errors)
 echo "Caching configuration..."

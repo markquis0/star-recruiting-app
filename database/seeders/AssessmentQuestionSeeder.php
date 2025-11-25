@@ -15,6 +15,7 @@ class AssessmentQuestionSeeder extends Seeder
 
         // Clear existing question sets to avoid duplicates when reseeding
         AssessmentQuestion::where('assessment_type_id', $behavioral->id)->delete();
+        AssessmentQuestion::where('assessment_type_id', $aptitude->id)->delete();
 
         // Behavioral Questions (Rating Scale 1-5)
         $behavioralQuestions = [
@@ -48,15 +49,19 @@ class AssessmentQuestionSeeder extends Seeder
         ];
 
         foreach ($behavioralQuestions as $index => $question) {
-            AssessmentQuestion::create([
-                'assessment_type_id' => $behavioral->id,
-                'question_text' => $question[0],
-                'question_type' => $question[1],
-                'options' => json_encode(['1', '2', '3', '4', '5']),
-                'correct_answer' => $question[3],
-                'weight' => 1.0,
-                'trait' => $question[4],
-            ]);
+            AssessmentQuestion::updateOrCreate(
+                [
+                    'assessment_type_id' => $behavioral->id,
+                    'question_text' => $question[0],
+                ],
+                [
+                    'question_type' => $question[1],
+                    'options' => json_encode(['1', '2', '3', '4', '5']),
+                    'correct_answer' => $question[3],
+                    'weight' => 1.0,
+                    'trait' => $question[4],
+                ]
+            );
         }
 
         // Aptitude Questions (Multiple Choice + Open Text)
@@ -222,15 +227,19 @@ class AssessmentQuestionSeeder extends Seeder
         ];
 
         foreach ($aptitudeQuestions as $question) {
-            AssessmentQuestion::create([
-                'assessment_type_id' => $aptitude->id,
-                'question_text' => $question['text'],
-                'question_type' => $question['type'],
-                'options' => (array_key_exists('options', $question) && $question['options']) ? json_encode($question['options']) : null,
-                'correct_answer' => $question['answer'] ?? null,
-                'weight' => 1.0,
-                'trait' => $question['category'],
-            ]);
+            AssessmentQuestion::updateOrCreate(
+                [
+                    'assessment_type_id' => $aptitude->id,
+                    'question_text' => $question['text'],
+                ],
+                [
+                    'question_type' => $question['type'],
+                    'options' => (array_key_exists('options', $question) && $question['options']) ? json_encode($question['options']) : null,
+                    'correct_answer' => $question['answer'] ?? null,
+                    'weight' => 1.0,
+                    'trait' => $question['category'],
+                ]
+            );
         }
     }
 }
