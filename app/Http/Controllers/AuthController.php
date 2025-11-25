@@ -57,17 +57,29 @@ class AuthController extends Controller
                 ]);
             }
 
-            // Check if Passport clients exist before creating token
+            // Check if Passport clients exist before creating token (Passport 13 uses grant_types)
             $personalClientExists = DB::table('oauth_clients')
-                ->where('personal_access_client', 1)
+                ->where('name', 'like', '%Personal Access Client%')
                 ->exists();
 
             if (!$personalClientExists) {
-                Log::error('Passport Personal Access Client not found during registration');
-                return response()->json([
-                    'message' => 'Authentication service not properly configured. Please contact support.',
-                    'error' => 'passport_client_missing'
-                ], 500);
+                Log::error('Passport Personal Access Client not found during registration. Attempting to create...');
+                // Try to create the client programmatically
+                try {
+                    $clientRepository = app(\Laravel\Passport\ClientRepository::class);
+                    $clientRepository->createPersonalAccessClient(
+                        null,
+                        'Star Recruiting Personal Access Client',
+                        'http://localhost'
+                    );
+                    Log::info('Passport Personal Access Client created successfully during registration');
+                } catch (\Exception $e) {
+                    Log::error('Failed to create Passport client during registration: ' . $e->getMessage());
+                    return response()->json([
+                        'message' => 'Authentication service not properly configured. Please contact support.',
+                        'error' => 'passport_client_missing'
+                    ], 500);
+                }
             }
 
             $token = $user->createToken('StarRecruiting')->accessToken;
@@ -110,17 +122,29 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
-            // Check if Passport clients exist before creating token
+            // Check if Passport clients exist before creating token (Passport 13 uses grant_types)
             $personalClientExists = DB::table('oauth_clients')
-                ->where('personal_access_client', 1)
+                ->where('name', 'like', '%Personal Access Client%')
                 ->exists();
 
             if (!$personalClientExists) {
-                Log::error('Passport Personal Access Client not found');
-                return response()->json([
-                    'message' => 'Authentication service not properly configured. Please contact support.',
-                    'error' => 'passport_client_missing'
-                ], 500);
+                Log::error('Passport Personal Access Client not found. Attempting to create...');
+                // Try to create the client programmatically
+                try {
+                    $clientRepository = app(\Laravel\Passport\ClientRepository::class);
+                    $clientRepository->createPersonalAccessClient(
+                        null,
+                        'Star Recruiting Personal Access Client',
+                        'http://localhost'
+                    );
+                    Log::info('Passport Personal Access Client created successfully');
+                } catch (\Exception $e) {
+                    Log::error('Failed to create Passport client: ' . $e->getMessage());
+                    return response()->json([
+                        'message' => 'Authentication service not properly configured. Please contact support.',
+                        'error' => 'passport_client_missing'
+                    ], 500);
+                }
             }
 
             $token = $user->createToken('StarRecruiting')->accessToken;

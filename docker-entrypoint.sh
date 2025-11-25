@@ -43,37 +43,32 @@ echo "Checking Passport OAuth clients..."
 php -r "
 require __DIR__ . '/vendor/autoload.php';
 \$app = require_once __DIR__ . '/bootstrap/app.php';
-\$app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+\$kernel = \$app->make('Illuminate\Contracts\Console\Kernel');
+\$kernel->bootstrap();
+
+use Laravel\Passport\ClientRepository;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 try {
-    if (!DB::table('oauth_clients')->where('name', 'Laravel Personal Access Client')->exists()) {
+    // Check if personal access client exists
+    \$clientExists = DB::table('oauth_clients')
+        ->where('name', 'like', '%Personal Access Client%')
+        ->exists();
+    
+    if (!\$clientExists) {
         echo 'Creating Personal Access Client...' . PHP_EOL;
-        \$clientId = (string) Str::uuid();
-        \$clientSecret = Str::random(40);
-        DB::table('oauth_clients')->insert([
-            'id' => \$clientId,
-            'name' => 'Laravel Personal Access Client',
-            'secret' => \$clientSecret,
-            'redirect' => 'http://localhost',
-            'personal_access_client' => 1,
-            'password_client' => 0,
-            'revoked' => 0,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        DB::table('oauth_personal_access_clients')->insert([
-            'client_id' => \$clientId,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        echo 'Personal Access Client created successfully.' . PHP_EOL;
+        \$clientRepository = \$app->make(ClientRepository::class);
+        \$client = \$clientRepository->createPersonalAccessClient(
+            null,
+            'Star Recruiting Personal Access Client',
+            'http://localhost'
+        );
+        echo 'Personal Access Client created successfully with ID: ' . \$client->id . PHP_EOL;
     } else {
         echo 'Personal Access Client already exists.' . PHP_EOL;
     }
 } catch (Exception \$e) {
-    echo 'Error checking/creating Passport clients: ' . \$e->getMessage() . PHP_EOL;
+    echo 'Error creating Passport client: ' . \$e->getMessage() . PHP_EOL;
 }
 " || echo "Failed to check/create Passport clients, continuing..."
 
