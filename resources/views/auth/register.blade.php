@@ -186,12 +186,20 @@ document.getElementById('register-form').addEventListener('submit', async functi
             // Format validation errors nicely
             let errorMessage = result.message || 'Registration failed';
             
-            // Show debug info if available (for 500 errors)
-            if (result.debug && response.status === 500) {
-                const debugInfo = typeof result.debug === 'string' 
-                    ? result.debug 
-                    : JSON.stringify(result.debug, null, 2);
-                errorMessage += '<br><small class="text-muted">Details: ' + debugInfo + '</small>';
+            // Show error details if available (for 500 errors)
+            if (response.status === 500) {
+                if (result.error_details) {
+                    const details = result.error_details;
+                    errorMessage += '<br><small class="text-muted">Error: ' + details.message + '</small>';
+                    if (details.type) {
+                        errorMessage += '<br><small class="text-muted">Type: ' + details.type + '</small>';
+                    }
+                } else if (result.debug) {
+                    const debugInfo = typeof result.debug === 'string' 
+                        ? result.debug 
+                        : JSON.stringify(result.debug, null, 2);
+                    errorMessage += '<br><small class="text-muted">Details: ' + debugInfo + '</small>';
+                }
             }
             
             if (result.errors) {

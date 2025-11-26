@@ -121,25 +121,36 @@ class AuthController extends Controller
             Log::error('Registration error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'exception_class' => get_class($e)
             ]);
             
             // Check if it's a Passport or token creation error
             $errorMessage = 'An error occurred during registration. Please try again.';
+            $errorCode = 'registration_failed';
+            
             if (str_contains($e->getMessage(), 'Authentication service not properly configured')) {
                 $errorMessage = 'Authentication service configuration error. Please contact support.';
+                $errorCode = 'passport_client_missing';
             } elseif (str_contains($e->getMessage(), 'Failed to generate authentication token')) {
                 $errorMessage = 'Failed to generate authentication token. Please try again.';
+                $errorCode = 'token_creation_failed';
+            } elseif (str_contains($e->getMessage(), 'SQLSTATE') || str_contains($e->getMessage(), 'database')) {
+                $errorMessage = 'Database error during registration. Please try again.';
+                $errorCode = 'database_error';
             }
             
+            // Always include error details in response for debugging (even in production)
+            // This helps diagnose issues without needing to check logs
             return response()->json([
                 'message' => $errorMessage,
-                'error' => 'registration_failed',
-                'debug' => config('app.debug') ? [
+                'error' => $errorCode,
+                'error_details' => [
                     'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
+                    'type' => get_class($e),
+                    'file' => basename($e->getFile()),
                     'line' => $e->getLine()
-                ] : null
+                ]
             ], 500);
         }
     }
