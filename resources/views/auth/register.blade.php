@@ -129,6 +129,9 @@ document.getElementById('register-form').addEventListener('submit', async functi
         }
     });
     
+    // Log the data being sent for debugging
+    console.log('Registration data being sent:', data);
+    
     try {
         const response = await fetch('/api/register', {
             method: 'POST',
@@ -161,21 +164,25 @@ document.getElementById('register-form').addEventListener('submit', async functi
         } else {
             document.getElementById('register-success').style.display = 'none';
             
+            // Log the full response for debugging
+            console.error('Registration error response:', result);
+            
             // Format validation errors nicely
-            let errorMessage = result.message || '';
+            let errorMessage = result.message || 'Registration failed';
             if (result.errors) {
                 const errorList = Object.entries(result.errors).map(([field, messages]) => {
-                    return `<strong>${field}:</strong> ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+                    const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    const messageText = Array.isArray(messages) ? messages.join(', ') : messages;
+                    return `<strong>${fieldName}:</strong> ${messageText}`;
                 }).join('<br>');
                 errorMessage = errorList || errorMessage;
-            } else if (typeof result === 'string') {
-                errorMessage = result;
-            } else if (typeof result === 'object') {
-                errorMessage = JSON.stringify(result);
+            } else if (result.message) {
+                errorMessage = result.message;
             }
             
             document.getElementById('register-error').innerHTML = errorMessage;
             document.getElementById('register-error').style.display = 'block';
+            console.error('Registration validation errors:', result.errors || result);
         }
     } catch (error) {
         document.getElementById('register-success').style.display = 'none';
