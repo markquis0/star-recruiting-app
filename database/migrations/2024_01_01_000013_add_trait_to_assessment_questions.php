@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assessment_questions', function (Blueprint $table) {
-            $table->string('trait', 50)->nullable()->after('weight');
+            // PostgreSQL doesn't support ->after() in ALTER TABLE, so column will be added at the end
+            $table->string('trait', 50)->nullable();
         });
     }
 

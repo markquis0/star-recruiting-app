@@ -9,14 +9,22 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('assessment_questions')) {
-            DB::statement("ALTER TABLE assessment_questions MODIFY question_type VARCHAR(50) NOT NULL DEFAULT 'multiple_choice'");
+            // PostgreSQL syntax: ALTER COLUMN instead of MODIFY
+            DB::statement("ALTER TABLE assessment_questions 
+                ALTER COLUMN question_type TYPE VARCHAR(50),
+                ALTER COLUMN question_type SET NOT NULL,
+                ALTER COLUMN question_type SET DEFAULT 'multiple_choice'");
         }
     }
 
     public function down(): void
     {
         if (Schema::hasTable('assessment_questions')) {
-            DB::statement("ALTER TABLE assessment_questions MODIFY question_type ENUM('multiple_choice','rating_scale') NOT NULL");
+            // PostgreSQL doesn't have ENUM like MySQL, so revert to VARCHAR
+            DB::statement("ALTER TABLE assessment_questions 
+                ALTER COLUMN question_type DROP DEFAULT,
+                ALTER COLUMN question_type TYPE VARCHAR(50),
+                ALTER COLUMN question_type SET NOT NULL");
         }
     }
 };
