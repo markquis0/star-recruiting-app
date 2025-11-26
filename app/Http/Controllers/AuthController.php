@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Artisan;
 
 class AuthController extends Controller
 {
@@ -60,32 +59,6 @@ class AuthController extends Controller
                     ]);
                 }
 
-                // Check if Passport tables exist first
-                $passportTableExists = DB::getSchemaBuilder()->hasTable('oauth_personal_access_clients');
-                
-                if (!$passportTableExists) {
-                    Log::error('Passport tables do not exist. Running passport:install...');
-                    // Run passport:install to create missing tables
-                    try {
-                        $exitCode = Artisan::call('passport:install', ['--force' => true]);
-                        $output = Artisan::output();
-                        Log::info('Passport install completed', [
-                            'exit_code' => $exitCode,
-                            'output' => $output
-                        ]);
-                        
-                        if ($exitCode !== 0) {
-                            throw new \Exception('passport:install returned exit code ' . $exitCode . '. Output: ' . $output);
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Failed to run passport:install: ' . $e->getMessage(), [
-                            'trace' => $e->getTraceAsString(),
-                            'exception_class' => get_class($e)
-                        ]);
-                        throw new \Exception('Failed to set up authentication service: ' . $e->getMessage());
-                    }
-                }
-                
                 // Check if Passport personal access client exists and is properly linked
                 try {
                     $personalAccessClient = DB::table('oauth_personal_access_clients')
@@ -93,30 +66,9 @@ class AuthController extends Controller
                         ->where('oauth_clients.name', 'like', '%Personal Access Client%')
                         ->first();
                 } catch (\Exception $e) {
-                    // If table still doesn't exist or query fails, try passport:install again
+                    // If table doesn't exist, this is a deployment issue - passport:install should have run during startup
                     Log::error('Error querying Passport client: ' . $e->getMessage());
-                    try {
-                        $exitCode = Artisan::call('passport:install', ['--force' => true]);
-                        $output = Artisan::output();
-                        Log::info('Passport install completed after query error', [
-                            'exit_code' => $exitCode,
-                            'output' => $output
-                        ]);
-                        
-                        if ($exitCode !== 0) {
-                            throw new \Exception('passport:install returned exit code ' . $exitCode . '. Output: ' . $output);
-                        }
-                        
-                        $personalAccessClient = DB::table('oauth_personal_access_clients')
-                            ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
-                            ->where('oauth_clients.name', 'like', '%Personal Access Client%')
-                            ->first();
-                    } catch (\Exception $e2) {
-                        Log::error('Failed to run passport:install after query error: ' . $e2->getMessage(), [
-                            'trace' => $e2->getTraceAsString()
-                        ]);
-                        throw new \Exception('Failed to set up authentication service: ' . $e2->getMessage());
-                    }
+                    throw new \Exception('Authentication service not properly configured. Please contact support.');
                 }
 
                 if (!$personalAccessClient) {
@@ -236,37 +188,6 @@ class AuthController extends Controller
 
             Log::info('Login: Checking Passport client');
             
-            // Check if Passport tables exist first
-            $passportTableExists = DB::getSchemaBuilder()->hasTable('oauth_personal_access_clients');
-            
-            if (!$passportTableExists) {
-                Log::error('Passport tables do not exist. Running passport:install...');
-                try {
-                    $exitCode = Artisan::call('passport:install', ['--force' => true]);
-                    $output = Artisan::output();
-                    Log::info('Passport install completed during login', [
-                        'exit_code' => $exitCode,
-                        'output' => $output
-                    ]);
-                    
-                    if ($exitCode !== 0) {
-                        throw new \Exception('passport:install returned exit code ' . $exitCode . '. Output: ' . $output);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Failed to run passport:install: ' . $e->getMessage(), [
-                        'trace' => $e->getTraceAsString()
-                    ]);
-                    return response()->json([
-                        'message' => 'Authentication service not properly configured. Please contact support.',
-                        'error' => 'passport_setup_failed',
-                        'error_details' => [
-                            'message' => $e->getMessage(),
-                            'type' => get_class($e)
-                        ]
-                    ], 500);
-                }
-            }
-            
             // Check if Passport personal access client exists and is properly linked
             try {
                 $personalAccessClient = DB::table('oauth_personal_access_clients')
@@ -274,37 +195,16 @@ class AuthController extends Controller
                     ->where('oauth_clients.name', 'like', '%Personal Access Client%')
                     ->first();
             } catch (\Exception $e) {
-                // If table still doesn't exist or query fails, try passport:install again
+                // If table doesn't exist, this is a deployment issue - passport:install should have run during startup
                 Log::error('Error querying Passport client: ' . $e->getMessage());
-                try {
-                    $exitCode = Artisan::call('passport:install', ['--force' => true]);
-                    $output = Artisan::output();
-                    Log::info('Passport install completed after query error during login', [
-                        'exit_code' => $exitCode,
-                        'output' => $output
-                    ]);
-                    
-                    if ($exitCode !== 0) {
-                        throw new \Exception('passport:install returned exit code ' . $exitCode . '. Output: ' . $output);
-                    }
-                    
-                    $personalAccessClient = DB::table('oauth_personal_access_clients')
-                        ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
-                        ->where('oauth_clients.name', 'like', '%Personal Access Client%')
-                        ->first();
-                } catch (\Exception $e2) {
-                    Log::error('Failed to run passport:install after query error: ' . $e2->getMessage(), [
-                        'trace' => $e2->getTraceAsString()
-                    ]);
-                    return response()->json([
-                        'message' => 'Authentication service not properly configured. Please contact support.',
-                        'error' => 'passport_setup_failed',
-                        'error_details' => [
-                            'message' => $e2->getMessage(),
-                            'type' => get_class($e2)
-                        ]
-                    ], 500);
-                }
+                return response()->json([
+                    'message' => 'Authentication service not properly configured. Please contact support.',
+                    'error' => 'passport_setup_failed',
+                    'error_details' => [
+                        'message' => $e->getMessage(),
+                        'type' => get_class($e)
+                    ]
+                ], 500);
             }
             
             Log::info('Login: Passport client check completed', ['client_exists' => $personalAccessClient !== null, 'client_id' => $personalAccessClient ? $personalAccessClient->client_id : null]);
