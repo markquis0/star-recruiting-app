@@ -32,45 +32,16 @@ php artisan db:show || echo "Database connection test failed, but continuing..."
 echo "Running migrations..."
 php artisan migrate --force || echo "Migration failed, continuing..."
 
-# Generate Passport keys if they don't exist
+# Install Passport (creates oauth_personal_access_clients table and initial clients)
+# This is safe to run multiple times - it won't recreate existing tables/clients
+echo "Installing Passport (creates missing tables and clients)..."
+php artisan passport:install --force || echo "Passport install failed, continuing..."
+
+# Generate Passport keys if they don't exist (passport:install may have created them)
 if [ ! -f storage/oauth-private.key ]; then
     echo "Generating Passport keys..."
     php artisan passport:keys --force || echo "Passport keys generation failed, continuing..."
 fi
-
-# Ensure Passport OAuth clients exist (required for createToken)
-echo "Checking Passport OAuth clients..."
-php -r "
-require __DIR__ . '/vendor/autoload.php';
-\$app = require_once __DIR__ . '/bootstrap/app.php';
-\$kernel = \$app->make('Illuminate\Contracts\Console\Kernel');
-\$kernel->bootstrap();
-
-use Laravel\Passport\ClientRepository;
-use Illuminate\Support\Facades\DB;
-
-try {
-    // Check if personal access client exists
-    \$clientExists = DB::table('oauth_clients')
-        ->where('name', 'like', '%Personal Access Client%')
-        ->exists();
-    
-    if (!\$clientExists) {
-        echo 'Creating Personal Access Client...' . PHP_EOL;
-        \$clientRepository = \$app->make(ClientRepository::class);
-        \$client = \$clientRepository->createPersonalAccessClient(
-            null,
-            'Star Recruiting Personal Access Client',
-            'http://localhost'
-        );
-        echo 'Personal Access Client created successfully with ID: ' . \$client->id . PHP_EOL;
-    } else {
-        echo 'Personal Access Client already exists.' . PHP_EOL;
-    }
-} catch (Exception \$e) {
-    echo 'Error creating Passport client: ' . \$e->getMessage() . PHP_EOL;
-}
-" || echo "Failed to check/create Passport clients, continuing..."
 
 # Cache configuration (only if no critical errors)
 echo "Caching configuration..."
