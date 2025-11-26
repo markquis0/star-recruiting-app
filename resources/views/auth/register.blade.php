@@ -142,7 +142,15 @@ document.getElementById('register-form').addEventListener('submit', async functi
             body: JSON.stringify(data)
         });
         
-        const result = await response.json();
+        let result;
+        try {
+            result = await response.json();
+        } catch (jsonError) {
+            // If response is not JSON, it's likely a server error
+            const text = await response.text();
+            console.error('Non-JSON response from server:', text);
+            throw new Error('Server returned an invalid response. Please try again.');
+        }
         
         if (response.ok) {
             // Store token
@@ -165,10 +173,27 @@ document.getElementById('register-form').addEventListener('submit', async functi
             document.getElementById('register-success').style.display = 'none';
             
             // Log the full response for debugging
-            console.error('Registration error response:', result);
+            console.error('Registration error response:', JSON.stringify(result, null, 2));
+            console.error('Registration error details:', {
+                status: response.status,
+                statusText: response.statusText,
+                message: result.message,
+                error: result.error,
+                errors: result.errors,
+                debug: result.debug
+            });
             
             // Format validation errors nicely
             let errorMessage = result.message || 'Registration failed';
+            
+            // Show debug info if available (for 500 errors)
+            if (result.debug && response.status === 500) {
+                const debugInfo = typeof result.debug === 'string' 
+                    ? result.debug 
+                    : JSON.stringify(result.debug, null, 2);
+                errorMessage += '<br><small class="text-muted">Details: ' + debugInfo + '</small>';
+            }
+            
             if (result.errors) {
                 const errorList = Object.entries(result.errors).map(([field, messages]) => {
                     const fieldName = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -182,7 +207,6 @@ document.getElementById('register-form').addEventListener('submit', async functi
             
             document.getElementById('register-error').innerHTML = errorMessage;
             document.getElementById('register-error').style.display = 'block';
-            console.error('Registration validation errors:', result.errors || result);
         }
     } catch (error) {
         document.getElementById('register-success').style.display = 'none';
