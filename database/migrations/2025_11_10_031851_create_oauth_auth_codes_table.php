@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('oauth_auth_codes')) {
-            Schema::create('oauth_auth_codes', function (Blueprint $table) {
+        // Always use the migration's connection, not the default
+        $schema = Schema::connection($this->getConnection());
+        
+        if (!$schema->hasTable('oauth_auth_codes')) {
+            $schema->create('oauth_auth_codes', function (Blueprint $table) {
                 $table->char('id', 80)->primary();
                 $table->foreignId('user_id')->index();
                 $table->foreignUuid('client_id');
@@ -28,7 +31,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_auth_codes');
+        Schema::connection($this->getConnection())
+            ->dropIfExists('oauth_auth_codes');
     }
 
     /**

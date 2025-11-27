@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('oauth_refresh_tokens')) {
-            Schema::create('oauth_refresh_tokens', function (Blueprint $table) {
+        // Always use the migration's connection, not the default
+        $schema = Schema::connection($this->getConnection());
+        
+        if (!$schema->hasTable('oauth_refresh_tokens')) {
+            $schema->create('oauth_refresh_tokens', function (Blueprint $table) {
                 $table->char('id', 80)->primary();
                 $table->char('access_token_id', 80)->index();
                 $table->boolean('revoked');
@@ -26,7 +29,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_refresh_tokens');
+        Schema::connection($this->getConnection())
+            ->dropIfExists('oauth_refresh_tokens');
     }
 
     /**
