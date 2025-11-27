@@ -11,19 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Always use the migration's connection, not the default
-        $schema = Schema::connection($this->getConnection());
-        
-        if (!$schema->hasTable('oauth_auth_codes')) {
-            $schema->create('oauth_auth_codes', function (Blueprint $table) {
-                $table->char('id', 80)->primary();
-                $table->foreignId('user_id')->index();
-                $table->foreignUuid('client_id');
-                $table->text('scopes')->nullable();
-                $table->boolean('revoked');
-                $table->dateTime('expires_at')->nullable();
-            });
-        }
+        // The oauth_auth_codes table already exists in production.
+        // We intentionally do nothing here to avoid duplicate-table errors.
+        //
+        // If you ever need to change the structure of oauth_auth_codes,
+        // create a separate migration that uses Schema::table(...) instead
+        // of trying to recreate the table.
     }
 
     /**
