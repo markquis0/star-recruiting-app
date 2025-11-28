@@ -28,6 +28,17 @@ chmod -R 775 storage bootstrap/cache || true
 echo "Testing database connection..."
 php artisan db:show || echo "Database connection test failed, but continuing..."
 
+# Delete any auto-generated Passport migrations (safety net)
+# We have committed migrations (2025_11_28_004430-004434), so remove any extras
+echo "Cleaning up any duplicate Passport migrations..."
+find database/migrations -name "*_create_oauth_*_table.php" \
+    ! -name "2025_11_28_004430*" \
+    ! -name "2025_11_28_004431*" \
+    ! -name "2025_11_28_004432*" \
+    ! -name "2025_11_28_004433*" \
+    ! -name "2025_11_28_004434*" \
+    -delete || true
+
 # Run migrations
 echo "Running migrations..."
 php artisan migrate --force || echo "Migration failed, continuing..."
