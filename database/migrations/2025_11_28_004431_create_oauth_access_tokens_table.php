@@ -11,12 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // The oauth_auth_codes table already exists in production.
-        // We intentionally do nothing here to avoid duplicate-table errors.
-        //
-        // If you ever need to change the structure of oauth_auth_codes,
-        // create a separate migration that uses Schema::table(...) instead
-        // of trying to recreate the table.
+        Schema::create('oauth_access_tokens', function (Blueprint $table) {
+            $table->char('id', 80)->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->foreignUuid('client_id');
+            $table->string('name')->nullable();
+            $table->text('scopes')->nullable();
+            $table->boolean('revoked');
+            $table->timestamps();
+            $table->dateTime('expires_at')->nullable();
+        });
     }
 
     /**
@@ -24,8 +28,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection($this->getConnection())
-            ->dropIfExists('oauth_auth_codes');
+        Schema::dropIfExists('oauth_access_tokens');
     }
 
     /**
