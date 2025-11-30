@@ -28,6 +28,11 @@ chmod -R 775 storage bootstrap/cache || true
 echo "Testing database connection..."
 php artisan db:show || echo "Database connection test failed, but continuing..."
 
+# For Option A: we use ONLY vendor Passport migrations.
+# Remove ALL app-level Passport migrations so there are no duplicates.
+echo "Removing any app-level Passport migrations..."
+find database/migrations -name "*_create_oauth_*_table.php" -delete || true
+
 # Run migrations (includes Passport vendor migrations automatically)
 echo "Running migrations..."
 php artisan migrate --force || echo "Migration failed, continuing..."
