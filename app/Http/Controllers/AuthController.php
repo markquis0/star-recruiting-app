@@ -59,46 +59,20 @@ class AuthController extends Controller
                     ]);
                 }
 
-                // Check if Passport personal access client exists and is properly linked
+                // 🔐 Ensure a Passport Personal Access Client exists
                 try {
-                    $personalAccessClient = DB::table('oauth_personal_access_clients')
-                        ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
-                        ->where('oauth_clients.name', 'like', '%Personal Access Client%')
+                    $personalAccessClient = DB::table('oauth_clients')
+                        ->where('personal_access_client', true)
+                        ->select('id', 'secret')
                         ->first();
                 } catch (\Exception $e) {
-                    // If table doesn't exist, this is a deployment issue - passport:install should have run during startup
-                    Log::error('Error querying Passport client: ' . $e->getMessage());
+                    Log::error('Error querying Passport client in register(): ' . $e->getMessage());
                     throw new \Exception('Authentication service not properly configured. Please contact support.');
                 }
 
                 if (!$personalAccessClient) {
-                    Log::error('Passport Personal Access Client not found during registration. Attempting to create...');
-                    // Try to create the client programmatically
-                    try {
-                        $clientRepository = app(\Laravel\Passport\ClientRepository::class);
-                        $client = $clientRepository->createPersonalAccessClient(
-                            null,
-                            'Star Recruiting Personal Access Client',
-                            'http://localhost'
-                        );
-                        Log::info('Passport Personal Access Client created successfully during registration with ID: ' . $client->id);
-                        
-                        // Verify it was created properly
-                        $verifyClient = DB::table('oauth_personal_access_clients')
-                            ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
-                            ->where('oauth_clients.id', $client->id)
-                            ->first();
-                        
-                        if (!$verifyClient) {
-                            throw new \Exception('Personal access client created but not properly linked');
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Failed to create Passport client during registration: ' . $e->getMessage(), [
-                            'trace' => $e->getTraceAsString()
-                        ]);
-                        // Throw exception to trigger transaction rollback
-                        throw new \Exception('Authentication service not properly configured: ' . $e->getMessage());
-                    }
+                    Log::error('Passport Personal Access Client not found in register(). Make sure `php artisan passport:client --personal` has been run.');
+                    throw new \Exception('Authentication service not properly configured. Please contact support.');
                 }
 
                 // Create token - if this fails, the transaction will rollback
@@ -146,8 +120,6 @@ class AuthController extends Controller
                 $errorCode = 'database_error';
             }
             
-            // Always include error details in response for debugging (even in production)
-            // This helps diagnose issues without needing to check logs
             return response()->json([
                 'message' => $errorMessage,
                 'error' => $errorCode,
@@ -187,16 +159,15 @@ class AuthController extends Controller
             }
 
             Log::info('Login: Checking Passport client');
-            
-            // Check if Passport personal access client exists and is properly linked
+
+            // 🔐 Ensure a Passport Personal Access Client exists
             try {
-                $personalAccessClient = DB::table('oauth_personal_access_clients')
-                    ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
-                    ->where('oauth_clients.name', 'like', '%Personal Access Client%')
+                $personalAccessClient = DB::table('oauth_clients')
+                    ->where('personal_access_client', true)
+                    ->select('id', 'secret')
                     ->first();
             } catch (\Exception $e) {
-                // If table doesn't exist, this is a deployment issue - passport:install should have run during startup
-                Log::error('Error querying Passport client: ' . $e->getMessage());
+                Log::error('Error querying Passport client in login(): ' . $e->getMessage());
                 return response()->json([
                     'message' => 'Authentication service not properly configured. Please contact support.',
                     'error' => 'passport_setup_failed',
@@ -206,46 +177,22 @@ class AuthController extends Controller
                     ]
                 ], 500);
             }
-            
-            Log::info('Login: Passport client check completed', ['client_exists' => $personalAccessClient !== null, 'client_id' => $personalAccessClient ? $personalAccessClient->client_id : null]);
+
+            Log::info('Login: Passport client check completed', [
+                'client_exists' => $personalAccessClient !== null,
+                'client_id' => $personalAccessClient ? $personalAccessClient->id : null,
+            ]);
 
             if (!$personalAccessClient) {
-                Log::error('Passport Personal Access Client not found or not properly linked. Attempting to create...');
-                // Try to create the client programmatically
-                try {
-                    $clientRepository = app(\Laravel\Passport\ClientRepository::class);
-                    Log::info('Login: Creating Passport client');
-                    $client = $clientRepository->createPersonalAccessClient(
-                        null,
-                        'Star Recruiting Personal Access Client',
-                        'http://localhost'
-                    );
-                    Log::info('Passport Personal Access Client created successfully with ID: ' . $client->id);
-                    
-                    // Verify it was created properly
-                    $verifyClient = DB::table('oauth_personal_access_clients')
-                        ->join('oauth_clients', 'oauth_personal_access_clients.client_id', '=', 'oauth_clients.id')
-                        ->where('oauth_clients.id', $client->id)
-                        ->first();
-                    
-                    if (!$verifyClient) {
-                        throw new \Exception('Personal access client created but not properly linked');
-                    }
-                    Log::info('Login: Passport client verified successfully');
-                } catch (\Exception $e) {
-                    Log::error('Failed to create Passport client: ' . $e->getMessage(), [
-                        'trace' => $e->getTraceAsString()
-                    ]);
-                    return response()->json([
-                        'message' => 'Authentication service not properly configured. Please contact support.',
-                        'error' => 'passport_client_missing',
-                        'debug' => config('app.debug') ? $e->getMessage() : null
-                    ], 500);
-                }
+                Log::error('Passport Personal Access Client not found in login(). Make sure `php artisan passport:client --personal` has been run.');
+                return response()->json([
+                    'message' => 'Authentication service not properly configured. Please contact support.',
+                    'error' => 'passport_client_missing',
+                    'debug' => config('app.debug') ? 'No Passport Personal Access Client found in oauth_clients' : null
+                ], 500);
             }
 
             Log::info('Login: Creating token');
-            // Create token with error handling
             try {
                 $token = $user->createToken('StarRecruiting')->accessToken;
                 Log::info('Login: Token created successfully');
@@ -256,9 +203,8 @@ class AuthController extends Controller
                     'exception_class' => get_class($tokenException)
                 ]);
                 
-                // Check if it's a Passport client issue
                 $clientCheck = DB::table('oauth_clients')
-                    ->where('name', 'like', '%Personal Access Client%')
+                    ->where('personal_access_client', true)
                     ->first();
                 
                 if (!$clientCheck) {
@@ -306,4 +252,3 @@ class AuthController extends Controller
         }
     }
 }
-
