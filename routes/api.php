@@ -60,6 +60,11 @@ Route::middleware('auth:api')->prefix('candidate')->group(function () {
     Route::post('/projects', [CandidateController::class, 'createProject']);
     Route::get('/projects/{id}', [CandidateController::class, 'getProject']);
     Route::put('/projects/{id}', [CandidateController::class, 'updateProject']);
+    
+    // Public profile management
+    Route::get('/public-profile', [CandidateController::class, 'getPublicProfile']);
+    Route::post('/public-profile/generate', [CandidateController::class, 'generatePublicProfile']);
+    Route::post('/public-profile/disable', [CandidateController::class, 'disablePublicProfile']);
 });
 
 // Recruiter Routes

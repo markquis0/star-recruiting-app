@@ -18,6 +18,14 @@ class Candidate extends Model
         'last_name',
         'role_title',
         'years_exp',
+        'public_profile_token',
+        'public_profile_active',
+        'public_profile_expires_at',
+    ];
+
+    protected $casts = [
+        'public_profile_active' => 'boolean',
+        'public_profile_expires_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

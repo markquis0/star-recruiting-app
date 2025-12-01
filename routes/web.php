@@ -1,6 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PublicProfileController;
+
+// Public profile route (no auth required)
+Route::get('/profile/{token}', [PublicProfileController::class, 'show'])
+    ->name('public.profile.show');
 
 Route::get('/', function () {
     return view('welcome');

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class CandidateController extends Controller
 {
@@ -496,6 +497,91 @@ class CandidateController extends Controller
             'recognition' => 'nullable|string',
             'learning' => 'nullable|string',
             'retro' => 'nullable|string',
+        ]);
+    }
+
+    /**
+     * Get current public profile status and URL.
+     */
+    public function getPublicProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+
+        $active = $candidate->public_profile_active;
+        $token = $candidate->public_profile_token;
+        $expires = $candidate->public_profile_expires_at;
+
+        $url = null;
+        if ($active && $token && (!$expires || now()->lt($expires))) {
+            $url = config('app.url') . '/profile/' . $token;
+        }
+
+        return response()->json([
+            'active' => $active,
+            'url' => $url,
+            'expires_at' => $expires,
+        ]);
+    }
+
+    /**
+     * Generate or regenerate a public profile link.
+     */
+    public function generatePublicProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+
+        // Generate a new token; this invalidates any old link
+        $candidate->public_profile_token = Str::random(48);
+        $candidate->public_profile_active = true;
+
+        // Optional: set an expiry, e.g. 90 days from now
+        // $candidate->public_profile_expires_at = now()->addDays(90);
+
+        $candidate->save();
+
+        $url = config('app.url') . '/profile/' . $candidate->public_profile_token;
+
+        return response()->json([
+            'active' => true,
+            'url' => $url,
+            'expires_at' => $candidate->public_profile_expires_at,
+        ]);
+    }
+
+    /**
+     * Disable the public profile link.
+     */
+    public function disablePublicProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+
+        $candidate->public_profile_active = false;
+        // Optionally also null out token:
+        // $candidate->public_profile_token = null;
+        $candidate->save();
+
+        return response()->json([
+            'active' => false,
+            'url' => null,
+            'expires_at' => $candidate->public_profile_expires_at,
         ]);
     }
 }

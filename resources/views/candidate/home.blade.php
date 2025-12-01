@@ -7,6 +7,29 @@
     <div class="col-12">
         <h2>Candidate Dashboard</h2>
         
+        <!-- Shareable Profile Link Section -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Shareable Profile Link</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Generate a read-only link to share your Star Recruiting profile with recruiters.
+                </p>
+
+                <div id="public-profile-status" class="mb-3"></div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="generatePublicProfile()">
+                        Generate / Regenerate Link
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="disablePublicProfile()">
+                        Disable Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Create New Forms Section -->
         <div class="card mb-4">
             <div class="card-header">
@@ -464,8 +487,133 @@
         return html;
     }
     
+    // Public Profile Management
+    async function loadPublicProfileStatus() {
+        const token = localStorage.getItem('api_token');
+        if (!token) return;
+
+        try {
+            const res = await fetch('/api/candidate/public-profile', {
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                }
+            });
+
+            const el = document.getElementById('public-profile-status');
+            if (!el) return;
+
+            if (!res.ok) {
+                el.innerHTML = '<p class="text-danger small">Unable to load shareable link status.</p>';
+                return;
+            }
+
+            const data = await res.json();
+            if (data.active && data.url) {
+                el.innerHTML = `
+                    <div class="mb-2">
+                        <p class="small mb-1"><strong>Link active:</strong></p>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" value="${data.url}" readonly 
+                                   id="profile-link-input" onclick="this.select();">
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyProfileLink()">
+                                Copy
+                            </button>
+                        </div>
+                        <p class="text-muted small mt-1 mb-0">
+                            Click "Copy" or select the link above to share it with recruiters.
+                        </p>
+                    </div>
+                `;
+            } else {
+                el.innerHTML = '<p class="text-muted small">No active link. Click "Generate / Regenerate Link" to create one.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading public profile status:', error);
+        }
+    }
+
+    function copyProfileLink() {
+        const input = document.getElementById('profile-link-input');
+        if (input) {
+            input.select();
+            document.execCommand('copy');
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+    }
+
+    async function generatePublicProfile() {
+        const token = localStorage.getItem('api_token');
+        if (!token) {
+            alert('You are not logged in.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/candidate/public-profile/generate', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+            });
+
+            if (!res.ok) {
+                alert('Unable to generate link.');
+                return;
+            }
+
+            await loadPublicProfileStatus();
+        } catch (error) {
+            console.error('Error generating public profile:', error);
+            alert('An error occurred while generating the link.');
+        }
+    }
+
+    async function disablePublicProfile() {
+        const token = localStorage.getItem('api_token');
+        if (!token) {
+            alert('You are not logged in.');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to disable your public profile link? It will no longer be accessible.')) {
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/candidate/public-profile/disable', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+            });
+
+            if (!res.ok) {
+                alert('Unable to disable link.');
+                return;
+            }
+
+            await loadPublicProfileStatus();
+        } catch (error) {
+            console.error('Error disabling public profile:', error);
+            alert('An error occurred while disabling the link.');
+        }
+    }
+    
     // Load forms on page load
     loadForms();
+    
+    // Load public profile status on page load
+    loadPublicProfileStatus();
 </script>
 @endsection
 
