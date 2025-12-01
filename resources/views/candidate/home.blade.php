@@ -7,26 +7,32 @@
     <div class="col-12">
         <h2>Candidate Dashboard</h2>
         
+        <!-- My Projects Section -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">My Projects</h5>
+                <a href="/candidate/projects/new" class="btn btn-sm btn-primary">+ Add Project</a>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Manage your project portfolio and showcase your experience.</p>
+                <a href="/candidate/projects" class="btn btn-outline-primary">View All Projects →</a>
+            </div>
+        </div>
+
         <!-- Create New Forms Section -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5>Create New Form</h5>
+                <h5>Create New Assessment</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <a href="/candidate/projects/new" class="btn btn-primary w-100">
-                            <strong>Project Form</strong><br>
-                            <small>Share your project experience</small>
-                        </a>
-                    </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <button id="behavioral-btn" class="btn btn-success w-100" onclick="createForm('behavioral')">
                             <strong>Behavioral Assessment</strong><br>
                             <small>Rate yourself on key traits</small>
                         </button>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-6 mb-3">
                         <button id="aptitude-btn" class="btn btn-info w-100" onclick="createForm('aptitude')">
                             <strong>Aptitude Test</strong><br>
                             <small>Test your skills</small>
@@ -38,9 +44,8 @@
 
         <!-- My Forms Section -->
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">My Forms</h5>
-                <a href="/candidate/projects" class="btn btn-sm btn-outline-primary">View All Projects</a>
+            <div class="card-header">
+                <h5 class="mb-0">My Assessments</h5>
             </div>
             <div class="card-body">
                 <div id="forms-container">
@@ -90,31 +95,30 @@
             const forms = data.forms || [];
             const container = document.getElementById('forms-container');
 
-            const hasBehavioral = forms.some(f => f.form_type === 'behavioral');
-            const hasAptitude = forms.some(f => f.form_type === 'aptitude');
+            // Filter out project forms - they're shown on the projects page
+            const assessmentForms = forms.filter(f => f.form_type !== 'project');
+
+            const hasBehavioral = assessmentForms.some(f => f.form_type === 'behavioral');
+            const hasAptitude = assessmentForms.some(f => f.form_type === 'aptitude');
             updateCreateButtons(hasBehavioral, hasAptitude);
 
-            if (!forms.length) {
-                container.innerHTML = '<p>No forms yet. Create your first form using the buttons above!</p>';
+            if (!assessmentForms.length) {
+                container.innerHTML = '<p>No assessments yet. Create your first assessment using the buttons above!</p>';
                 return;
             }
 
-            container.innerHTML = forms.map(form => {
+            container.innerHTML = assessmentForms.map(form => {
                 const formType = form.form_type.charAt(0).toUpperCase() + form.form_type.slice(1);
                 const statusBadge = form.status === 'submitted' ? 'success' : (form.status === 'reviewed' ? 'info' : 'warning');
 
                 let actionButtons = '';
 
                 if (form.status === 'incomplete') {
-                    if (form.form_type === 'project') {
-                        actionButtons = `<a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-primary me-2">Fill Out</a>`;
-                    } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
+                    if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
                         actionButtons = `<a href="/candidate/assessment/${form.id}?type=${form.form_type}" class="btn btn-sm btn-primary me-2">Take Assessment</a>`;
                     }
                 } else {
-                    if (form.form_type === 'project') {
-                        actionButtons = `<a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-secondary me-2">View/Edit</a>`;
-                    } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
+                    if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
                         actionButtons = `<a href="/candidate/assessment/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
                     } else {
                         actionButtons = `<button class="btn btn-sm btn-secondary me-2" onclick="viewForm(${form.id})">View</button>`;
@@ -221,9 +225,8 @@
             const data = await response.json();
             if (data.form) {
                 await loadForms();
-                if (formType === 'project') {
-                    window.location.href = `/candidate/projects/${data.form.id}/edit`;
-                } else {
+                // Projects should be created via /candidate/projects/new, not here
+                if (formType !== 'project') {
                     window.location.href = `/candidate/assessment/${data.form.id}?type=${formType}`;
                 }
             } else if (!data.message) {
