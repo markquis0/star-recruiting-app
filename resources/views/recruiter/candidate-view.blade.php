@@ -219,12 +219,13 @@
                     }
                 }
                 
-                // Show answers if available
-                if (assessment.answers && assessment.answers.length > 0) {
+                // Show answers for Aptitude Assessment (if available)
+                if (aptitudeForm && aptitudeForm.assessment && aptitudeForm.assessment.answers && aptitudeForm.assessment.answers.length > 0) {
+                    const aptitudeAssessment = aptitudeForm.assessment;
                     html += `
                         <div class="card mb-3">
                             <div class="card-header">
-                                <h6>Assessment Answers</h6>
+                                <h6>Aptitude Assessment Answers</h6>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -239,7 +240,7 @@
                                         <tbody>
                         `;
                         
-                        assessment.answers.forEach((answer, index) => {
+                        aptitudeAssessment.answers.forEach((answer, index) => {
                             const question = answer.question;
                             html += `
                                 <tr>
