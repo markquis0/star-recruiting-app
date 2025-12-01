@@ -119,14 +119,14 @@
         }
 
         const categoryLabels = {
-            'analytical': 'Category 1: Analytical / Logical Thinking',
-            'creative': 'Category 2: Creative / Conceptual Thinking',
-            'pragmatic': 'Category 3: Pragmatic / Execution-Oriented Thinking',
-            'relational': 'Category 4: Relational / Collaborative Thinking',
+            'logic_reasoning': 'Category 1: Logic & Reasoning',
+            'conceptual_strategic': 'Category 2: Conceptual & Strategic Thinking',
+            'decision_prioritization': 'Category 3: Decision-Making & Prioritization',
+            'people_insight': 'Category 4: People Insight & Communication',
             'general': 'General Aptitude'
         };
 
-        const ordering = ['analytical', 'creative', 'pragmatic', 'relational', 'general'];
+        const ordering = ['logic_reasoning', 'conceptual_strategic', 'decision_prioritization', 'people_insight', 'general'];
         const grouped = {};
 
         questions.forEach(question => {
@@ -156,7 +156,7 @@
                 const currentIndex = questionIndex;
                 questionIndex += 1;
 
-                if (question.question_type === 'open_text') {
+                if (question.question_type === 'open_ended') {
                     html += `
                         <div class="mb-4">
                             <label class="form-label">${currentIndex + 1}. ${escapeHtml(question.question_text)}</label>
