@@ -114,7 +114,7 @@ class AssessmentQuestionSeeder extends Seeder
             [
                 'category' => 'creative',
                 'text' => 'Problem Reframing: Your company wants to reduce support tickets by 50% without hiring staff. What approach would you take?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'creative',
@@ -126,7 +126,7 @@ class AssessmentQuestionSeeder extends Seeder
             [
                 'category' => 'creative',
                 'text' => 'Idea Generation: You have a study app. Name three unconventional ways to increase engagement.',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'creative',
@@ -138,7 +138,7 @@ class AssessmentQuestionSeeder extends Seeder
             [
                 'category' => 'creative',
                 'text' => 'Innovation Challenge: Imagine a meeting scheduling tool. How could you make it delight users in an unexpected way?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'creative',
@@ -152,7 +152,7 @@ class AssessmentQuestionSeeder extends Seeder
             [
                 'category' => 'pragmatic',
                 'text' => 'Prioritization: You have three tasks—deploy a critical bug fix, update documentation, conduct team training. Which do you tackle first and why?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'pragmatic',
@@ -171,29 +171,29 @@ class AssessmentQuestionSeeder extends Seeder
             [
                 'category' => 'pragmatic',
                 'text' => 'Risk Assessment: You notice a minor bug shortly before release. Do you ship now or delay? Explain your decision.',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'pragmatic',
                 'text' => 'Process Optimization: You notice repetitive manual work in your team. How do you address it?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'pragmatic',
                 'text' => 'Decision under Constraint: Your budget is reduced by 20%. Which project adjustments do you prioritize?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'pragmatic',
                 'text' => 'Goal Setting: How would you plan your team’s work for a month-long sprint?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
 
             // Category 4: Relational / Collaborative Thinking (6)
             [
                 'category' => 'relational',
                 'text' => 'Conflict Resolution: Two engineers disagree on implementation details. How do you handle it?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'relational',
@@ -212,17 +212,17 @@ class AssessmentQuestionSeeder extends Seeder
             [
                 'category' => 'relational',
                 'text' => 'Leadership Style: How would you encourage collaboration in a remote team?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'relational',
                 'text' => 'Feedback Reception: You receive feedback that your solution is inefficient. How do you respond?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
             [
                 'category' => 'relational',
                 'text' => 'Interpersonal Influence: You need buy-in from multiple teams for a project. How do you approach it?',
-                'type' => 'open_text',
+                'type' => 'open_ended',
             ],
         ];
 
