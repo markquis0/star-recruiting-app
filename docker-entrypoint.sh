@@ -39,12 +39,14 @@ find database/migrations -name "*_create_oauth_*_table.php" \
 echo "Running migrations..."
 php artisan migrate --force || echo "Migration failed, continuing..."
 
-# Install Passport (creates oauth_personal_access_clients table and initial clients)
-# This is safe to run multiple times - it won't recreate existing tables/clients
-echo "Installing Passport (creates missing tables and clients)..."
-php artisan passport:install --force || echo "Passport install failed, continuing..."
+# ❌ REMOVED: passport:install republishes migrations and causes duplicate table errors
+# We already have all Passport tables in the DB and a personal access client.
+# Running passport:install would republish migrations into database/migrations
+# and create duplicate table errors on the next migrate --force.
+# echo "Installing Passport (creates missing tables and clients)..."
+# php artisan passport:install --force || echo "Passport install failed, continuing..."
 
-# Generate Passport keys if they don't exist (passport:install may have created them)
+# ✅ KEEP: Generate Passport keys if they don't exist (keys are safe, install is not)
 if [ ! -f storage/oauth-private.key ]; then
     echo "Generating Passport keys..."
     php artisan passport:keys --force || echo "Passport keys generation failed, continuing..."
