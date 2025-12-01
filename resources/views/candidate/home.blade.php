@@ -7,32 +7,26 @@
     <div class="col-12">
         <h2>Candidate Dashboard</h2>
         
-        <!-- My Projects Section -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">My Projects</h5>
-                <a href="/candidate/projects/new" class="btn btn-sm btn-primary">+ Add Project</a>
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-3">Manage your project portfolio and showcase your experience.</p>
-                <a href="/candidate/projects" class="btn btn-outline-primary">View All Projects →</a>
-            </div>
-        </div>
-
         <!-- Create New Forms Section -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5>Create New Assessment</h5>
+                <h5>Create New</h5>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
+                        <a href="/candidate/projects/new" class="btn btn-primary w-100">
+                            <strong>Project</strong><br>
+                            <small>Share your project experience</small>
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
                         <button id="behavioral-btn" class="btn btn-success w-100" onclick="createForm('behavioral')">
                             <strong>Behavioral Assessment</strong><br>
                             <small>Rate yourself on key traits</small>
                         </button>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <button id="aptitude-btn" class="btn btn-info w-100" onclick="createForm('aptitude')">
                             <strong>Aptitude Test</strong><br>
                             <small>Test your skills</small>
@@ -45,7 +39,7 @@
         <!-- My Forms Section -->
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">My Assessments</h5>
+                <h5 class="mb-0">My Forms</h5>
             </div>
             <div class="card-body">
                 <div id="forms-container">
@@ -69,7 +63,8 @@
     }
 
     function escapeHtml(value) {
-        return value
+        if (!value) return '';
+        return String(value)
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
@@ -95,62 +90,145 @@
             const forms = data.forms || [];
             const container = document.getElementById('forms-container');
 
-            // Filter out project forms - they're shown on the projects page
-            const assessmentForms = forms.filter(f => f.form_type !== 'project');
-
-            const hasBehavioral = assessmentForms.some(f => f.form_type === 'behavioral');
-            const hasAptitude = assessmentForms.some(f => f.form_type === 'aptitude');
+            const hasBehavioral = forms.some(f => f.form_type === 'behavioral');
+            const hasAptitude = forms.some(f => f.form_type === 'aptitude');
             updateCreateButtons(hasBehavioral, hasAptitude);
 
-            if (!assessmentForms.length) {
-                container.innerHTML = '<p>No assessments yet. Create your first assessment using the buttons above!</p>';
+            if (!forms.length) {
+                container.innerHTML = '<p>No forms yet. Create your first form using the buttons above!</p>';
                 return;
             }
 
-            container.innerHTML = assessmentForms.map(form => {
-                const formType = form.form_type.charAt(0).toUpperCase() + form.form_type.slice(1);
-                const statusBadge = form.status === 'submitted' ? 'success' : (form.status === 'reviewed' ? 'info' : 'warning');
-
-                let actionButtons = '';
-
-                if (form.status === 'incomplete') {
-                    if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
-                        actionButtons = `<a href="/candidate/assessment/${form.id}?type=${form.form_type}" class="btn btn-sm btn-primary me-2">Take Assessment</a>`;
-                    }
-                } else {
-                    if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
-                        actionButtons = `<a href="/candidate/assessment/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
-                    } else {
-                        actionButtons = `<button class="btn btn-sm btn-secondary me-2" onclick="viewForm(${form.id})">View</button>`;
-                    }
+            container.innerHTML = forms.map(form => {
+                // Special rendering for projects
+                if (form.form_type === 'project') {
+                    return renderProjectForm(form);
                 }
-
-                actionButtons += `<button class="btn btn-sm btn-danger" onclick="deleteForm(${form.id}, '${form.form_type}')">Delete</button>`;
-
-                return `
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h5>${formType} Form</h5>
-                                    <p class="mb-1">Status: <span class="badge bg-${statusBadge}">${form.status}</span></p>
-                                    <p class="mb-1">Review Count: ${form.review_count}</p>
-                                    ${form.assessment ? `<p class="mb-1">Category: <strong>${form.assessment.category}</strong></p>` : ''}
-                                    ${form.assessment && form.assessment.total_score !== null ? `<p class="mb-1">Score: ${form.assessment.total_score}%</p>` : ''}
-                                    ${form.assessment && form.assessment.score_summary ? formatScoreSummary(form.assessment.score_summary) : ''}
-                                </div>
-                                <div>
-                                    ${actionButtons}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                
+                // Standard rendering for assessments
+                return renderAssessmentForm(form);
             }).join('');
         } catch (error) {
             console.error('Error:', error);
             document.getElementById('forms-container').innerHTML = '<p class="text-danger">Error loading forms. Please login again.</p>';
         }
+    }
+
+    function renderProjectForm(form) {
+        const data = form.data || {};
+        const projectTitle = data.project_title || 'Untitled Project';
+        const roleTitle = data.role_title || '';
+        const company = data.company || '';
+        const timeframe = data.timeframe || '';
+        const summary = data.summary_one_liner || '';
+        const metrics = data.metrics || [];
+        const statusBadge = form.status === 'submitted' ? 'success' : (form.status === 'reviewed' ? 'info' : 'warning');
+
+        let roleCompanyText = '';
+        if (roleTitle && company) {
+            roleCompanyText = `${roleTitle} @ ${company}`;
+        } else if (roleTitle) {
+            roleCompanyText = roleTitle;
+        } else if (company) {
+            roleCompanyText = company;
+        }
+
+        let metricsHtml = '';
+        if (metrics && metrics.length > 0) {
+            metricsHtml = `
+                <div class="mt-2">
+                    <small class="text-muted">Key Metrics:</small>
+                    <ul class="list-unstyled mb-0 mt-1" style="font-size: 0.875rem;">
+                        ${metrics.map(metric => {
+                            const name = metric.metric_name || 'Metric';
+                            const baseline = metric.baseline_value || null;
+                            const final = metric.final_value || null;
+                            const tf = metric.timeframe || null;
+                            
+                            let metricText = name;
+                            if (baseline || final) {
+                                metricText += `: ${baseline || '?'} → ${final || '?'}`;
+                            }
+                            if (tf) {
+                                metricText += ` (${tf})`;
+                            }
+                            
+                            return `<li class="text-muted mb-1">${escapeHtml(metricText)}</li>`;
+                        }).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        let actionButtons = '';
+        if (form.status === 'incomplete') {
+            actionButtons = `<a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-primary me-2">Fill Out</a>`;
+        } else {
+            actionButtons = `<a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-secondary me-2">View/Edit</a>`;
+        }
+        actionButtons += `<button class="btn btn-sm btn-danger" onclick="deleteForm(${form.id}, '${form.form_type}')">Delete</button>`;
+
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h5 style="color: #FF3B6B; margin-bottom: 0.5rem;">${escapeHtml(projectTitle)}</h5>
+                            ${roleCompanyText ? `<p class="text-muted mb-1 small">${escapeHtml(roleCompanyText)}</p>` : ''}
+                            ${timeframe ? `<p class="text-muted mb-1 small"><small>${escapeHtml(timeframe)}</small></p>` : ''}
+                            ${summary ? `<p class="mb-2">${escapeHtml(summary)}</p>` : ''}
+                            ${metricsHtml}
+                            <p class="mb-1 mt-2">Status: <span class="badge bg-${statusBadge}">${form.status}</span></p>
+                            <p class="mb-0">Review Count: ${form.review_count || 0}</p>
+                        </div>
+                        <div class="text-end ms-3">
+                            ${actionButtons}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderAssessmentForm(form) {
+        const formType = form.form_type.charAt(0).toUpperCase() + form.form_type.slice(1);
+        const statusBadge = form.status === 'submitted' ? 'success' : (form.status === 'reviewed' ? 'info' : 'warning');
+
+        let actionButtons = '';
+
+        if (form.status === 'incomplete') {
+            if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
+                actionButtons = `<a href="/candidate/assessment/${form.id}?type=${form.form_type}" class="btn btn-sm btn-primary me-2">Take Assessment</a>`;
+            }
+        } else {
+            if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
+                actionButtons = `<a href="/candidate/assessment/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
+            } else {
+                actionButtons = `<button class="btn btn-sm btn-secondary me-2" onclick="viewForm(${form.id})">View</button>`;
+            }
+        }
+
+        actionButtons += `<button class="btn btn-sm btn-danger" onclick="deleteForm(${form.id}, '${form.form_type}')">Delete</button>`;
+
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5>${formType} Form</h5>
+                            <p class="mb-1">Status: <span class="badge bg-${statusBadge}">${form.status}</span></p>
+                            <p class="mb-1">Review Count: ${form.review_count}</p>
+                            ${form.assessment ? `<p class="mb-1">Category: <strong>${form.assessment.category}</strong></p>` : ''}
+                            ${form.assessment && form.assessment.total_score !== null ? `<p class="mb-1">Score: ${form.assessment.total_score}%</p>` : ''}
+                            ${form.assessment && form.assessment.score_summary ? formatScoreSummary(form.assessment.score_summary) : ''}
+                        </div>
+                        <div>
+                            ${actionButtons}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     function updateCreateButtons(hasBehavioral, hasAptitude) {
