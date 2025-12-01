@@ -64,164 +64,166 @@ class AssessmentQuestionSeeder extends Seeder
             );
         }
 
-        // Aptitude Questions (Multiple Choice + Open Text)
+        // Aptitude Questions (Multiple Choice + Open-Ended)
         $aptitudeQuestions = [
-            // Category 1: Analytical / Logical Thinking (6)
+            // Category 1: Analytical & Logical Thinking (7 questions: 5 MC + 2 open-ended)
             [
                 'category' => 'analytical',
-                'text' => 'Pattern Recognition: Sequence 3, 6, 12, 24, ?',
+                'text' => 'Pattern Logic: Which number best completes the sequence: 5, 9, 17, 33, ?',
                 'type' => 'multiple_choice',
-                'options' => ['A' => '36', 'B' => '48', 'C' => '42', 'D' => '54'],
-                'answer' => 'B',
-            ],
-            [
-                'category' => 'analytical',
-                'text' => 'Logic Puzzle: Three servers are connected. Server A can only send messages to Server C via Server B. What is the network topology?',
-                'type' => 'multiple_choice',
-                'options' => ['A' => 'Star', 'B' => 'Ring', 'C' => 'Bus', 'D' => 'Mesh'],
-                'answer' => 'B',
-            ],
-            [
-                'category' => 'analytical',
-                'text' => 'Data Interpretation: Daily active users: 150, 180, 210, 240, 300. Approximate average daily growth rate?',
-                'type' => 'multiple_choice',
-                'options' => ['A' => '5%', 'B' => '10%', 'C' => '15%', 'D' => '20%'],
-                'answer' => 'D',
-            ],
-            [
-                'category' => 'analytical',
-                'text' => 'Deductive Reasoning: If all engineers attend a tech talk, and Jane attends all tech talks, what can we conclude?',
-                'type' => 'multiple_choice',
-                'options' => ['A' => 'Jane is an engineer', 'B' => 'Jane might be an engineer', 'C' => 'Jane is not an engineer', 'D' => 'Cannot determine'],
-                'answer' => 'B',
-            ],
-            [
-                'category' => 'analytical',
-                'text' => 'Abstract Reasoning: Which figure completes the series? (Refer to Figure Set A in the assessment.)',
-                'type' => 'multiple_choice',
-                'options' => ['A' => 'Figure A', 'B' => 'Figure B', 'C' => 'Figure C', 'D' => 'Figure D'],
+                'options' => ['A' => '49', 'B' => '57', 'C' => '65', 'D' => '41'],
                 'answer' => 'C',
             ],
             [
                 'category' => 'analytical',
-                'text' => 'Algorithmic Thinking: You need to sort a list of 10,000 numbers efficiently. Which approach is best?',
+                'text' => 'Basic Deduction: All projects requiring budget approval must be reviewed on Tuesdays. The Apollo project is reviewed on Tuesday. What can you conclude?',
                 'type' => 'multiple_choice',
-                'options' => ['A' => 'Bubble sort', 'B' => 'Quick sort', 'C' => 'Selection sort', 'D' => 'Insertion sort'],
-                'answer' => 'B',
-            ],
-
-            // Category 2: Creative / Conceptual Thinking (6)
-            [
-                'category' => 'creative',
-                'text' => 'Problem Reframing: Your company wants to reduce support tickets by 50% without hiring staff. What approach would you take?',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'creative',
-                'text' => 'Analogical Thinking: Which is most analogous to debugging software?',
-                'type' => 'multiple_choice',
-                'options' => ['A' => 'Gardening', 'B' => 'Cooking', 'C' => 'Solving a mystery', 'D' => 'Driving a car'],
+                'options' => ['A' => 'Apollo required budget approval', 'B' => 'Apollo did not require approval', 'C' => 'Maybe Apollo required approval', 'D' => 'Review day does not indicate approval'],
                 'answer' => 'C',
             ],
             [
-                'category' => 'creative',
-                'text' => 'Idea Generation: You have a study app. Name three unconventional ways to increase engagement.',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'creative',
-                'text' => 'Conceptual Connection: Which two items are least related?',
+                'category' => 'analytical',
+                'text' => 'Information Synthesis: A dashboard shows a sharp upward spike in customer messages at 9 PM daily. What is the most reasonable first step?',
                 'type' => 'multiple_choice',
-                'options' => ['A' => 'Cloud storage & Dropbox', 'B' => 'AI & Machine Learning', 'C' => 'Keyboard & Mouse', 'D' => 'Database & Solar Panel'],
-                'answer' => 'D',
-            ],
-            [
-                'category' => 'creative',
-                'text' => 'Innovation Challenge: Imagine a meeting scheduling tool. How could you make it delight users in an unexpected way?',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'creative',
-                'text' => 'Visual Pattern Recognition: Which option completes the abstract shape sequence? (Refer to Figure Set B in the assessment.)',
-                'type' => 'multiple_choice',
-                'options' => ['A' => 'Option A', 'B' => 'Option B', 'C' => 'Option C', 'D' => 'Option D'],
+                'options' => ['A' => 'Increase staffing at 9 PM', 'B' => 'Investigate why users contact support at that time', 'C' => 'Disable chat at 9 PM', 'D' => 'Assume it\'s a random pattern'],
                 'answer' => 'B',
             ],
-
-            // Category 3: Pragmatic / Execution-Oriented Thinking (7)
             [
-                'category' => 'pragmatic',
-                'text' => 'Prioritization: You have three tasks—deploy a critical bug fix, update documentation, conduct team training. Which do you tackle first and why?',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'pragmatic',
-                'text' => 'Scenario Analysis: A project is behind schedule. Options: cut a feature, extend the deadline, add resources, or negotiate scope. Your choice?',
+                'category' => 'analytical',
+                'text' => 'Logical Puzzle: If A → B and B → C, which must be true?',
                 'type' => 'multiple_choice',
-                'options' => ['A' => 'Cut feature', 'B' => 'Extend deadline', 'C' => 'Add resources', 'D' => 'Negotiate scope'],
-                'answer' => 'D',
-            ],
-            [
-                'category' => 'pragmatic',
-                'text' => 'Efficiency Assessment: A support issue keeps recurring. What do you address first?',
-                'type' => 'multiple_choice',
-                'options' => ['A' => 'Root cause', 'B' => 'Workaround', 'C' => 'User training', 'D' => 'Combination'],
+                'options' => ['A' => 'A → C', 'B' => 'C → A', 'C' => 'A and C are unrelated', 'D' => 'B causes A'],
                 'answer' => 'A',
             ],
             [
-                'category' => 'pragmatic',
-                'text' => 'Risk Assessment: You notice a minor bug shortly before release. Do you ship now or delay? Explain your decision.',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'pragmatic',
-                'text' => 'Process Optimization: You notice repetitive manual work in your team. How do you address it?',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'pragmatic',
-                'text' => 'Decision under Constraint: Your budget is reduced by 20%. Which project adjustments do you prioritize?',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'pragmatic',
-                'text' => 'Goal Setting: How would you plan your team’s work for a month-long sprint?',
-                'type' => 'open_ended',
-            ],
-
-            // Category 4: Relational / Collaborative Thinking (6)
-            [
-                'category' => 'relational',
-                'text' => 'Conflict Resolution: Two engineers disagree on implementation details. How do you handle it?',
-                'type' => 'open_ended',
-            ],
-            [
-                'category' => 'relational',
-                'text' => 'Communication Style: Explain a complex technical concept to a non-technical stakeholder. What approach do you take?',
+                'category' => 'analytical',
+                'text' => 'Data Reasoning: Which visual would best detect an outlier in daily sales?',
                 'type' => 'multiple_choice',
-                'options' => ['A' => 'Step-by-step technical explanation', 'B' => 'Use analogies', 'C' => 'Provide a summary with visuals', 'D' => 'Delegate explanation'],
+                'options' => ['A' => 'Line graph', 'B' => 'Bar chart', 'C' => 'Box plot', 'D' => 'Pie chart'],
                 'answer' => 'C',
             ],
             [
-                'category' => 'relational',
-                'text' => 'Team Problem Solving: Someone proposes a flawed solution in a meeting. What do you do?',
+                'category' => 'analytical',
+                'text' => 'Describe how you would evaluate whether two seemingly unrelated trends are connected.',
+                'type' => 'open_ended',
+            ],
+            [
+                'category' => 'analytical',
+                'text' => 'Explain how you would break down a complex problem you\'ve never encountered before.',
+                'type' => 'open_ended',
+            ],
+
+            // Category 2: Creative & Conceptual Thinking (6 questions: 3 MC + 3 open-ended)
+            [
+                'category' => 'creative',
+                'text' => 'Reframing: Your team wants to increase customer loyalty without spending more on marketing. Which approach represents reframing the problem?',
                 'type' => 'multiple_choice',
-                'options' => ['A' => 'Critique openly', 'B' => 'Suggest alternatives', 'C' => 'Wait for others to respond', 'D' => 'Discuss privately later'],
+                'options' => ['A' => 'Increase email frequency', 'B' => 'Improve product experience', 'C' => 'Run a discount campaign', 'D' => 'Hire a loyalty specialist'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Analogy Matching: Improving a workflow is most similar to:',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Editing a document', 'B' => 'Painting a picture', 'C' => 'Solving a mystery', 'D' => 'Traveling to a new country'],
+                'answer' => 'C',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Concept Link: Which pair is most conceptually unrelated?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Strategy & Planning', 'B' => 'Feedback & Improvement', 'C' => 'Deadlines & Time', 'D' => 'Creativity & Regulations'],
+                'answer' => 'D',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Provide one unconventional idea to make a routine internal tool genuinely enjoyable to use.',
+                'type' => 'open_ended',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Describe how you would redesign a broken process without knowing who caused the issues.',
+                'type' => 'open_ended',
+            ],
+            [
+                'category' => 'creative',
+                'text' => 'Imagine you could eliminate one frustrating user experience from any product you\'ve used. What would it be and why?',
+                'type' => 'open_ended',
+            ],
+
+            // Category 3: Execution, Prioritization & Decision-Making (6 questions: 3 MC + 3 open-ended)
+            [
+                'category' => 'pragmatic',
+                'text' => 'Prioritization Under Pressure: You receive an urgent request, a high-effort task, and a small but important fix. What do you do first?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Urgent request', 'B' => 'High-effort task', 'C' => 'Small important fix', 'D' => 'Ask for clarification on priorities'],
+                'answer' => 'D',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Scenario Evaluation: A deliverable is at risk due to unclear requirements. What is your first action?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Continue with assumptions', 'B' => 'Escalate immediately', 'C' => 'Clarify requirements with stakeholders', 'D' => 'Freeze work until told otherwise'],
+                'answer' => 'C',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Efficiency Judgment: A recurring operational issue causes 10–15 minutes of daily slowdown. Best approach?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Ignore it unless it becomes critical', 'B' => 'Investigate to eliminate root cause', 'C' => 'Document a workaround', 'D' => 'Train people to manage it faster'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'How do you decide when a task needs a perfect solution vs. a good-enough solution?',
+                'type' => 'open_ended',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Describe a time you had to adjust your plan quickly. What was your decision process?',
+                'type' => 'open_ended',
+            ],
+            [
+                'category' => 'pragmatic',
+                'text' => 'Explain how you would plan a 30-day cycle of work with multiple moving parts.',
+                'type' => 'open_ended',
+            ],
+
+            // Category 4: Relational & Collaborative Thinking (6 questions: 3 MC + 3 open-ended)
+            [
+                'category' => 'relational',
+                'text' => 'Conflict Navigation: Two colleagues disagree strongly about an approach. What\'s the most productive action?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Choose a side', 'B' => 'Facilitate a structured discussion', 'C' => 'Let them resolve it privately', 'D' => 'Escalate immediately'],
                 'answer' => 'B',
             ],
             [
                 'category' => 'relational',
-                'text' => 'Leadership Style: How would you encourage collaboration in a remote team?',
+                'text' => 'Communication Style: You must explain a new process to someone struggling to understand it. What do you do?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Repeat the explanation more slowly', 'B' => 'Use examples relevant to their role', 'C' => 'Send them documentation', 'D' => 'Involve their manager'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'Team Decision-Making: In a meeting, you realize the group is moving toward a poor decision. Best response?',
+                'type' => 'multiple_choice',
+                'options' => ['A' => 'Immediately interrupt', 'B' => 'Ask questions that challenge assumptions', 'C' => 'Let the team learn from mistakes', 'D' => 'Stop the meeting'],
+                'answer' => 'B',
+            ],
+            [
+                'category' => 'relational',
+                'text' => 'How do you ensure everyone feels heard in group discussions?',
                 'type' => 'open_ended',
             ],
             [
                 'category' => 'relational',
-                'text' => 'Feedback Reception: You receive feedback that your solution is inefficient. How do you respond?',
+                'text' => 'Describe your approach when someone strongly disagrees with your idea.',
                 'type' => 'open_ended',
             ],
             [
                 'category' => 'relational',
-                'text' => 'Interpersonal Influence: You need buy-in from multiple teams for a project. How do you approach it?',
+                'text' => 'Explain how you build trust with new teammates or cross-functional partners.',
                 'type' => 'open_ended',
             ],
         ];
