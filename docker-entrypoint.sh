@@ -29,10 +29,10 @@ echo "Testing database connection..."
 php artisan db:show || echo "Database connection test failed, but continuing..."
 
 # For Option A: we use ONLY vendor Passport migrations.
-# Remove app-level Passport migrations (except oauth_personal_access_clients which we need).
-echo "Removing duplicate app-level Passport migrations..."
+# Remove ALL auto-generated Passport migrations (except oauth_personal_access_clients which we need).
+echo "Removing ALL auto-generated Passport migrations..."
 find database/migrations -name "*_create_oauth_*_table.php" \
-    ! -name "*_create_oauth_personal_access_clients_table.php" \
+    ! -name "*oauth_personal_access_clients*" \
     -delete || true
 
 # Run migrations (includes Passport vendor migrations automatically)
