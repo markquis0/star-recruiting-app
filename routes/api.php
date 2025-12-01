@@ -52,6 +52,7 @@ Route::middleware('auth:api')->prefix('candidate')->group(function () {
     Route::post('/form/{id}', [CandidateController::class, 'updateForm']);
     Route::delete('/form/{id}', [CandidateController::class, 'deleteForm']);
     Route::post('/assessment/{form_id}', [CandidateController::class, 'submitAssessment']);
+    Route::get('/assessment/{id}', [CandidateController::class, 'getAssessment']);
     Route::get('/questions/{type}', [CandidateController::class, 'getQuestions']);
 });
 

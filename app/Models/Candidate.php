@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Candidate extends Model
 {
@@ -32,6 +33,20 @@ class Candidate extends Model
     public function savedByRecruiters(): HasMany
     {
         return $this->hasMany(SavedCandidate::class);
+    }
+
+    public function latestAptitudeAssessment()
+    {
+        return $this->hasOneThrough(
+            Assessment::class,
+            Form::class,
+            'candidate_id', // Foreign key on forms table
+            'form_id',      // Foreign key on assessments table
+            'id',           // Local key on candidates table
+            'id'            // Local key on forms table
+        )->where('forms.form_type', 'aptitude')
+          ->where('forms.status', 'submitted')
+          ->latest('assessments.created_at');
     }
 
     public function getFullNameAttribute(): string

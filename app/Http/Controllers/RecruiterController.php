@@ -36,7 +36,7 @@ class RecruiterController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $query = Candidate::with(['user', 'forms.assessment']);
+        $query = Candidate::with(['user', 'forms.assessment', 'latestAptitudeAssessment']);
 
         // Filter by role title (if provided)
         if ($request->filled('role')) {
@@ -75,8 +75,54 @@ class RecruiterController extends Controller
 
         $candidates = $query->get();
 
+        // Transform candidates to include lightweight aptitude summary
+        $data = $candidates->map(function ($candidate) {
+            $assessment = $candidate->latestAptitudeAssessment;
+            $aptitudeProfile = $assessment?->aptitude_profile ?? null;
+
+            $overall = $aptitudeProfile['overall_accuracy'] ?? null;
+            $summary = $aptitudeProfile['summary'] ?? null;
+            $confidence = $aptitudeProfile['confidence'] ?? null;
+
+            // Get first strength dimension label if available
+            $topLabel = null;
+            if ($aptitudeProfile && !empty($aptitudeProfile['strengths'])) {
+                $firstKey = $aptitudeProfile['strengths'][0];
+                $dim = $aptitudeProfile['dimensions'][$firstKey] ?? null;
+                $topLabel = $dim['label'] ?? null;
+            }
+
+            // Get base candidate data
+            $candidateData = [
+                'id' => $candidate->id,
+                'first_name' => $candidate->first_name,
+                'last_name' => $candidate->last_name,
+                'full_name' => $candidate->full_name,
+                'role_title' => $candidate->role_title,
+                'years_exp' => $candidate->years_exp,
+                'user' => $candidate->user ? [
+                    'id' => $candidate->user->id,
+                    'username' => $candidate->user->username,
+                ] : null,
+            ];
+
+            // Add aptitude summary if available
+            if ($aptitudeProfile) {
+                $candidateData['aptitude'] = [
+                    'overall_accuracy' => $overall,
+                    'top_dimension_label' => $topLabel,
+                    'summary' => $summary,
+                    'confidence' => $confidence,
+                ];
+            } else {
+                $candidateData['aptitude'] = null;
+            }
+
+            return $candidateData;
+        });
+
         return response()->json([
-            'candidates' => $candidates,
+            'candidates' => $data,
             'count' => $candidates->count()
         ]);
     }

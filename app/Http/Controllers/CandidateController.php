@@ -209,6 +209,35 @@ class CandidateController extends Controller
         return response()->json(['assessments' => $assessments]);
     }
 
+    public function getAssessment(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+        $assessment = Assessment::whereHas('form', function ($query) use ($candidate) {
+            $query->where('candidate_id', $candidate->id);
+        })->with(['form', 'answers.question'])->findOrFail($id);
+
+        // Determine form type from the form relationship
+        $formType = $assessment->form->form_type ?? null;
+
+        return response()->json([
+            'id' => $assessment->id,
+            'form_id' => $assessment->form_id,
+            'form_type' => $formType,
+            'total_score' => $assessment->total_score,
+            'category' => $assessment->category,
+            'aptitude_profile' => $assessment->aptitude_profile, // full profile with summary and confidence
+            'score_summary' => $assessment->score_summary,
+            'created_at' => $assessment->created_at,
+            'updated_at' => $assessment->updated_at,
+        ]);
+    }
+
     public function getQuestions(Request $request, string $type): JsonResponse
     {
         $user = $request->user();

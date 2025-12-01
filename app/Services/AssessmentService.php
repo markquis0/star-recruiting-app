@@ -198,11 +198,96 @@ class AssessmentService
             ->values()
             ->all();
 
-        return [
+        $profile = [
             'overall_accuracy' => $overallAccuracy,
             'strengths'        => $strengths,   // e.g. ['decision_prioritization','logic_reasoning']
             'dimensions'       => $dimensions,  // keyed by trait
         ];
+
+        // Add human-readable summary
+        $profile['summary'] = $this->describeAptitudeStrengths($profile);
+
+        // Add confidence indicator
+        $profile['confidence'] = $this->calculateAptitudeConfidence(
+            $profile['overall_accuracy'],
+            $profile['dimensions']
+        );
+
+        return $profile;
+    }
+
+    /**
+     * Generate a human-readable summary of aptitude strengths.
+     *
+     * @param  array  $profile
+     * @return string|null
+     */
+    public function describeAptitudeStrengths(array $profile): ?string
+    {
+        $dimensions  = $profile['dimensions'] ?? [];
+        $strengthKeys = $profile['strengths'] ?? [];
+
+        if (empty($dimensions) || empty($strengthKeys)) {
+            return null;
+        }
+
+        $labels = [];
+        foreach ($strengthKeys as $key) {
+            if (isset($dimensions[$key]['label'])) {
+                $labels[] = $dimensions[$key]['label'];
+            }
+        }
+
+        if (count($labels) === 0) {
+            return null;
+        }
+
+        if (count($labels) === 1) {
+            return "Strong in {$labels[0]}.";
+        }
+
+        if (count($labels) === 2) {
+            return "Strong in {$labels[0]} and {$labels[1]}.";
+        }
+
+        // Fallback if somehow more than 2 keys
+        $last = array_pop($labels);
+        return "Strong in " . implode(', ', $labels) . " and {$last}.";
+    }
+
+    /**
+     * Calculate confidence level based on overall accuracy and dimension scores.
+     *
+     * @param  int|null  $overallAccuracy
+     * @param  array  $dimensions
+     * @return string|null
+     */
+    public function calculateAptitudeConfidence(?int $overallAccuracy, array $dimensions): ?string
+    {
+        if ($overallAccuracy === null) {
+            return null;
+        }
+
+        // Simple confidence definition:
+        // High: 80%+ overall and at least 2 dimensions >= 75%
+        // Medium: 60–79% overall
+        // Low: < 60% or not enough data
+        $scores = collect($dimensions)
+            ->pluck('accuracy')
+            ->filter(fn ($v) => !is_null($v))
+            ->values();
+
+        $strongDims = $scores->filter(fn ($v) => $v >= 75)->count();
+
+        if ($overallAccuracy >= 80 && $strongDims >= 2) {
+            return 'high';
+        }
+
+        if ($overallAccuracy >= 60) {
+            return 'medium';
+        }
+
+        return 'low';
     }
 }
 
