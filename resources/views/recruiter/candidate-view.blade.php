@@ -106,21 +106,88 @@
                     <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 1rem 0;">
                 `;
                 
-                // Project Forms
-                const projectForms = forms.filter(f => f.form_type === 'project');
-                if (projectForms.length > 0) {
-                    html += '<h5 class="mt-4 mb-3" style="color: #FF3B6B; font-size: 1rem;">Project Forms</h5>';
-                    projectForms.forEach(form => {
+                // Project Experience
+                const projects = result.projects || [];
+                if (projects.length > 0) {
+                    html += `<h5 class="mt-4 mb-3" style="color: #FF3B6B; font-size: 1rem;">Project Experience (${projects.length})</h5>`;
+                    projects.forEach((form, index) => {
                         const data = form.data || {};
+                        const projectTitle = data.project_title || 'Untitled Project';
+                        const roleTitle = data.role_title || '';
+                        const company = data.company || '';
+                        const timeframe = data.timeframe || '';
+                        const summary = data.summary_one_liner || '';
+                        const metrics = data.metrics || [];
+                        
+                        let roleCompanyText = '';
+                        if (roleTitle && company) {
+                            roleCompanyText = `${roleTitle} @ ${company}`;
+                        } else if (roleTitle) {
+                            roleCompanyText = roleTitle;
+                        } else if (company) {
+                            roleCompanyText = company;
+                        }
+
+                        let metricsHtml = '';
+                        if (metrics && metrics.length > 0) {
+                            metricsHtml = `
+                                <div class="mt-2 mb-2">
+                                    <strong class="text-sm" style="color: #FF3B6B;">Key Metrics:</strong>
+                                    <ul class="mb-0 mt-1" style="font-size: 0.875rem;">
+                                        ${metrics.map(m => {
+                                            const name = m.metric_name || 'Metric';
+                                            const baseline = m.baseline_value || null;
+                                            const final = m.final_value || null;
+                                            const tf = m.timeframe || null;
+                                            
+                                            let metricText = name;
+                                            if (baseline || final) {
+                                                metricText += `: ${baseline || '?'} → ${final || '?'}`;
+                                            }
+                                            if (tf) {
+                                                metricText += ` (${tf})`;
+                                            }
+                                            
+                                            return `<li style="color: #ccc;">${metricText}</li>`;
+                                        }).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        }
+
                         html += `
                             <div class="card mb-3">
                                 <div class="card-body">
-                                    <h6 style="color: #FF3B6B; margin-bottom: 0.5rem; font-size: 0.875rem;">${data.project_name || 'Untitled Project'}</h6>
-                                    <p class="text-muted mb-1" style="font-size: 0.875rem; line-height: 1.6;"><strong>Description:</strong> ${data.description || 'N/A'}</p>
-                                    <p class="text-muted mb-1" style="font-size: 0.875rem; line-height: 1.6;"><strong>Technologies:</strong> ${Array.isArray(data.technologies) ? data.technologies.join(', ') : (data.technologies || 'N/A')}</p>
-                                    <p class="text-muted mb-1" style="font-size: 0.875rem; line-height: 1.6;"><strong>Role:</strong> ${data.role || 'N/A'}</p>
+                                    <h6 style="color: #FF3B6B; margin-bottom: 0.5rem; font-size: 0.875rem;">${projectTitle}</h6>
+                                    ${roleCompanyText ? `<p class="text-muted mb-1" style="font-size: 0.875rem; line-height: 1.6;"><strong>Role:</strong> ${roleCompanyText}</p>` : ''}
+                                    ${timeframe ? `<p class="text-muted mb-1" style="font-size: 0.875rem; line-height: 1.6;"><strong>Timeframe:</strong> ${timeframe}</p>` : ''}
+                                    ${summary ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;">${summary}</p>` : ''}
+                                    ${metricsHtml}
                                     <p class="text-muted mb-1" style="font-size: 0.875rem; line-height: 1.6;"><strong>Status:</strong> <span class="badge" style="background: ${form.status === 'submitted' ? '#10b981' : '#f59e0b'}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem;">${form.status}</span></p>
-                                    <p class="text-muted mb-0" style="font-size: 0.875rem; line-height: 1.6;"><strong>Review Count:</strong> ${form.review_count || 0}</p>
+                                    <p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Review Count:</strong> ${form.review_count || 0}</p>
+                                    
+                                    <button class="btn btn-sm btn-secondary" onclick="toggleProjectDetails(${form.id})" id="project-toggle-${form.id}">
+                                        View Details
+                                    </button>
+                                    
+                                    <div id="project-details-${form.id}" style="display:none;" class="mt-3 pt-3 border-top">
+                                        ${data.context ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Context:</strong> ${data.context}</p>` : ''}
+                                        ${data.problem ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Problem:</strong> ${data.problem}</p>` : ''}
+                                        ${data.affected_audience ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Affected audience:</strong> ${data.affected_audience}</p>` : ''}
+                                        ${data.primary_goal ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Primary goal:</strong> ${data.primary_goal}</p>` : ''}
+                                        ${data.responsibilities ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Responsibilities:</strong> ${data.responsibilities}</p>` : ''}
+                                        ${data.project_type ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Project type:</strong> ${data.project_type.replace('_', ' ')}</p>` : ''}
+                                        ${data.teams_involved && data.teams_involved.length > 0 ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Teams involved:</strong> ${Array.isArray(data.teams_involved) ? data.teams_involved.join(', ') : data.teams_involved}</p>` : ''}
+                                        ${data.collaboration_example ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Collaboration example:</strong> ${data.collaboration_example}</p>` : ''}
+                                        ${data.challenges ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Challenges:</strong> ${data.challenges}</p>` : ''}
+                                        ${data.challenge_response ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>How handled:</strong> ${data.challenge_response}</p>` : ''}
+                                        ${data.tradeoffs ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Tradeoffs:</strong> ${data.tradeoffs}</p>` : ''}
+                                        ${data.outcome_summary ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Outcome:</strong> ${data.outcome_summary}</p>` : ''}
+                                        ${data.impact ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Impact:</strong> ${data.impact}</p>` : ''}
+                                        ${data.recognition ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Recognition:</strong> ${data.recognition}</p>` : ''}
+                                        ${data.learning ? `<p class="text-muted mb-2" style="font-size: 0.875rem; line-height: 1.6;"><strong>Learning:</strong> ${data.learning}</p>` : ''}
+                                        ${data.retro ? `<p class="text-muted mb-0" style="font-size: 0.875rem; line-height: 1.6;"><strong>What would be done differently:</strong> ${data.retro}</p>` : ''}
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -415,6 +482,19 @@
     function toggleSaveCandidate(candidateId) {
         // This function is set dynamically by updateSaveButton
         // It will call either saveCandidate or removeSavedCandidate
+    }
+    
+    function toggleProjectDetails(projectId) {
+        const detailsDiv = document.getElementById('project-details-' + projectId);
+        const toggleBtn = document.getElementById('project-toggle-' + projectId);
+        
+        if (detailsDiv.style.display === 'none') {
+            detailsDiv.style.display = 'block';
+            toggleBtn.textContent = 'Hide Details';
+        } else {
+            detailsDiv.style.display = 'none';
+            toggleBtn.textContent = 'View Details';
+        }
     }
     
     loadCandidateData();

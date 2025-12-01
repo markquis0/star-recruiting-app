@@ -1,7 +1,7 @@
 <?php $__env->startSection('title', 'Take Assessment'); ?>
 
 <?php $__env->startSection('content'); ?>
-<div class="row">
+<div class="row px-3 px-lg-5 mt-4 mt-lg-5">
     <div class="col-12">
         <h2 id="assessment-title">Assessment</h2>
         <div class="card">
@@ -15,9 +15,10 @@
                         <a href="/candidate/home" class="btn btn-secondary btn-lg ms-2">Cancel</a>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 </div>
 
 <script>
@@ -28,6 +29,15 @@
     
     if (!token) {
         window.location.href = '/login';
+    }
+
+    function escapeHtml(value) {
+        return value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
     
     // Load questions for this assessment type
@@ -74,7 +84,7 @@
             } else if (assessmentType === 'aptitude') {
                 title.textContent = 'Aptitude Test';
                 container.innerHTML = `
-                    <p class="lead">Answer the following multiple-choice questions</p>
+                    <p class="lead">Answer each question below. The assessment is grouped into thinking style categories and includes both multiple-choice and open-ended prompts.</p>
                     ${generateAptitudeQuestions(result.questions)}
                 `;
             }
@@ -87,7 +97,7 @@
     function generateBehavioralQuestions(questions) {
         return questions.map((question, index) => `
             <div class="mb-4">
-                <label class="form-label">${index + 1}. ${question.question_text}</label>
+                <label class="form-label">${index + 1}. ${escapeHtml(question.question_text)}</label>
                 <select class="form-select" name="answers[${index}][answer]" required>
                     <option value="">Select rating...</option>
                     <option value="1">1 - Strongly Disagree</option>
@@ -102,35 +112,97 @@
     }
     
     function generateAptitudeQuestions(questions) {
-        return questions.map((question, index) => {
-            // Options might be stored as ["A: 15", "B: 30"] or just ["15", "30"]
-            let options = question.options || [];
-            if (typeof options === 'string') {
-                try {
-                    options = JSON.parse(options);
-                } catch (e) {
-                    options = [];
-                }
+        if (!Array.isArray(questions) || questions.length === 0) {
+            return '';
+        }
+
+        const categoryLabels = {
+            'analytical': 'Category 1: Analytical / Logical Thinking',
+            'creative': 'Category 2: Creative / Conceptual Thinking',
+            'pragmatic': 'Category 3: Pragmatic / Execution-Oriented Thinking',
+            'relational': 'Category 4: Relational / Collaborative Thinking',
+            'general': 'General Aptitude'
+        };
+
+        const ordering = ['analytical', 'creative', 'pragmatic', 'relational', 'general'];
+        const grouped = {};
+
+        questions.forEach(question => {
+            const key = question.trait || 'general';
+            if (!grouped[key]) {
+                grouped[key] = [];
             }
-            
-            return `
-                <div class="mb-4">
-                    <label class="form-label">${index + 1}. ${question.question_text}</label>
-                    ${options.map((opt, optIndex) => {
-                        const letter = String.fromCharCode(65 + optIndex);
-                        // Handle options that might be "A: 15" or just "15"
-                        const optionText = opt.includes(':') ? opt : `${letter}: ${opt}`;
-                        return `
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="answers[${index}][answer]" id="q${index}_${optIndex}" value="${letter}" required>
-                                <label class="form-check-label" for="q${index}_${optIndex}">${optionText}</label>
-                            </div>
-                        `;
-                    }).join('')}
-                    <input type="hidden" name="answers[${index}][question_id]" value="${question.id}">
+            grouped[key].push(question);
+        });
+
+        let questionIndex = 0;
+        let html = '';
+
+        ordering.forEach(category => {
+            const items = grouped[category];
+            if (!items || items.length === 0) {
+                return;
+            }
+
+            html += `
+                <div class="mt-4">
+                    <h4 class="text-info">${escapeHtml(categoryLabels[category] || (category.charAt(0).toUpperCase() + category.slice(1)))}</h4>
                 </div>
             `;
-        }).join('');
+
+            items.forEach(question => {
+                const currentIndex = questionIndex;
+                questionIndex += 1;
+
+                if (question.question_type === 'open_text') {
+                    html += `
+                        <div class="mb-4">
+                            <label class="form-label">${currentIndex + 1}. ${escapeHtml(question.question_text)}</label>
+                            <textarea class="form-control" name="answers[${currentIndex}][answer]" rows="4" placeholder="Type your response" required></textarea>
+                            <input type="hidden" name="answers[${currentIndex}][question_id]" value="${question.id}">
+                        </div>
+                    `;
+                } else {
+                    let options = question.options || [];
+                    if (typeof options === 'string') {
+                        try {
+                            options = JSON.parse(options);
+                        } catch (e) {
+                            options = [];
+                        }
+                    }
+
+                    let optionEntries = [];
+                    if (Array.isArray(options)) {
+                        optionEntries = options.map((opt, optIndex) => {
+                            const letter = String.fromCharCode(65 + optIndex);
+                            const optionText = opt.includes(':') || opt.includes(')') ? opt : `${letter}: ${opt}`;
+                            return [letter, optionText];
+                        });
+                    } else {
+                        optionEntries = Object.entries(options);
+                    }
+
+                    html += `
+                        <div class="mb-4">
+                            <label class="form-label">${currentIndex + 1}. ${escapeHtml(question.question_text)}</label>
+                            ${optionEntries.map(([letter, text], optIndex) => {
+                                const displayText = (typeof text === 'string' && (text.includes(':') || text.includes(')'))) ? text : `${letter}) ${text}`;
+                                return `
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="answers[${currentIndex}][answer]" id="q${currentIndex}_${optIndex}" value="${letter}" required>
+                                        <label class="form-check-label" for="q${currentIndex}_${optIndex}">${escapeHtml(displayText)}</label>
+                                    </div>
+                                `;
+                            }).join('')}
+                            <input type="hidden" name="answers[${currentIndex}][question_id]" value="${question.id}">
+                        </div>
+                    `;
+                }
+            });
+        });
+
+        return html;
     }
     
     document.getElementById('assessment-form').addEventListener('submit', async function(e) {
@@ -155,7 +227,7 @@
         
         // Convert to array format
         Object.keys(answerMap).forEach(key => {
-            if (answerMap[key].answer) {
+            if (answerMap[key].answer !== undefined) {
                 answers.push({
                     question_id: parseInt(answerMap[key].question_id),
                     answer: answerMap[key].answer
@@ -177,14 +249,27 @@
             const result = await response.json();
             
             if (response.ok) {
-                alert('Assessment submitted successfully!');
+                await showAppModal({
+                    title: 'Assessment Submitted',
+                    message: 'Your assessment has been submitted successfully.',
+                    variant: 'success'
+                });
                 window.location.href = '/candidate/home';
             } else {
-                alert('Error: ' + (result.message || JSON.stringify(result)));
+                const message = result.message || (typeof result === 'string' ? result : JSON.stringify(result));
+                await showAppModal({
+                    title: 'Submission Error',
+                    message: message,
+                    variant: 'danger'
+                });
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('Error submitting assessment: ' + error.message);
+            await showAppModal({
+                title: 'Submission Error',
+                message: error.message,
+                variant: 'danger'
+            });
         }
     });
     

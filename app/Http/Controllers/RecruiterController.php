@@ -194,10 +194,18 @@ class RecruiterController extends Controller
             'forms.assessment.answers.question'
         ])->findOrFail($id);
 
+        // Extract project forms
+        $projects = $candidate->forms
+            ->where('form_type', 'project')
+            ->values();
+
         // Increment review_count for all forms
         $candidate->forms()->increment('review_count');
 
-        return response()->json(['candidate' => $candidate]);
+        return response()->json([
+            'candidate' => $candidate,
+            'projects' => $projects,
+        ]);
     }
 
     public function getProfile(Request $request): JsonResponse

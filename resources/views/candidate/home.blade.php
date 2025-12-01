@@ -15,10 +15,10 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <button class="btn btn-primary w-100" onclick="createForm('project')">
+                        <a href="/candidate/projects/new" class="btn btn-primary w-100">
                             <strong>Project Form</strong><br>
                             <small>Share your project experience</small>
-                        </button>
+                        </a>
                     </div>
                     <div class="col-md-4 mb-3">
                         <button id="behavioral-btn" class="btn btn-success w-100" onclick="createForm('behavioral')">
@@ -38,8 +38,9 @@
 
         <!-- My Forms Section -->
         <div class="card">
-            <div class="card-header">
-                <h5>My Forms</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">My Forms</h5>
+                <a href="/candidate/projects" class="btn btn-sm btn-outline-primary">View All Projects</a>
             </div>
             <div class="card-body">
                 <div id="forms-container">
@@ -106,13 +107,13 @@
 
                 if (form.status === 'incomplete') {
                     if (form.form_type === 'project') {
-                        actionButtons = `<a href="/candidate/form/${form.id}" class="btn btn-sm btn-primary me-2">Fill Out</a>`;
+                        actionButtons = `<a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-primary me-2">Fill Out</a>`;
                     } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
                         actionButtons = `<a href="/candidate/assessment/${form.id}?type=${form.form_type}" class="btn btn-sm btn-primary me-2">Take Assessment</a>`;
                     }
                 } else {
                     if (form.form_type === 'project') {
-                        actionButtons = `<a href="/candidate/form/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
+                        actionButtons = `<a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-secondary me-2">View/Edit</a>`;
                     } else if (form.form_type === 'behavioral' || form.form_type === 'aptitude') {
                         actionButtons = `<a href="/candidate/assessment/${form.id}/view" class="btn btn-sm btn-secondary me-2">View</a>`;
                     } else {
@@ -221,7 +222,7 @@
             if (data.form) {
                 await loadForms();
                 if (formType === 'project') {
-                    window.location.href = `/candidate/form/${data.form.id}`;
+                    window.location.href = `/candidate/projects/${data.form.id}/edit`;
                 } else {
                     window.location.href = `/candidate/assessment/${data.form.id}?type=${formType}`;
                 }

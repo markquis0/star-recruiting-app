@@ -54,6 +54,12 @@ Route::middleware('auth:api')->prefix('candidate')->group(function () {
     Route::post('/assessment/{form_id}', [CandidateController::class, 'submitAssessment']);
     Route::get('/assessment/{id}', [CandidateController::class, 'getAssessment']);
     Route::get('/questions/{type}', [CandidateController::class, 'getQuestions']);
+    
+    // Project routes
+    Route::get('/projects', [CandidateController::class, 'getProjects']);
+    Route::post('/projects', [CandidateController::class, 'createProject']);
+    Route::get('/projects/{id}', [CandidateController::class, 'getProject']);
+    Route::put('/projects/{id}', [CandidateController::class, 'updateProject']);
 });
 
 // Recruiter Routes

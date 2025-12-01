@@ -374,5 +374,129 @@ class CandidateController extends Controller
             'candidate' => $candidate->fresh()
         ]);
     }
+
+    /**
+     * Get all project forms for the authenticated candidate.
+     */
+    public function getProjects(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+        $projects = $candidate->forms()
+            ->where('form_type', 'project')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json(['projects' => $projects]);
+    }
+
+    /**
+     * Get a single project form by ID.
+     */
+    public function getProject(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+        $project = $candidate->forms()
+            ->where('form_type', 'project')
+            ->findOrFail($id);
+
+        return response()->json(['project' => $project]);
+    }
+
+    /**
+     * Create a new project form.
+     */
+    public function createProject(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $data = $this->validateProjectData($request);
+        
+        $candidate = $user->candidate;
+        $form = Form::create([
+            'candidate_id' => $candidate->id,
+            'form_type' => 'project',
+            'status' => 'submitted',
+            'data' => $data,
+        ]);
+
+        return response()->json(['project' => $form], 201);
+    }
+
+    /**
+     * Update an existing project form.
+     */
+    public function updateProject(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user->isCandidate()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $candidate = $user->candidate;
+        $form = Form::where('candidate_id', $candidate->id)
+            ->where('form_type', 'project')
+            ->findOrFail($id);
+
+        $data = $this->validateProjectData($request);
+        $form->data = $data;
+        $form->status = 'submitted';
+        $form->save();
+
+        return response()->json(['project' => $form->fresh()]);
+    }
+
+    /**
+     * Validate project form data.
+     */
+    protected function validateProjectData(Request $request): array
+    {
+        return $request->validate([
+            'project_title' => 'required|string|max:255',
+            'company' => 'nullable|string|max:255',
+            'role_title' => 'nullable|string|max:255',
+            'timeframe' => 'nullable|string|max:255',
+            'summary_one_liner' => 'nullable|string|max:255',
+            'context' => 'nullable|string',
+            'problem' => 'nullable|string',
+            'affected_audience' => 'nullable|string',
+            'primary_goal' => 'nullable|string',
+            'metrics' => 'nullable|array|max:3',
+            'metrics.*.metric_name' => 'required_with:metrics|string|max:255',
+            'metrics.*.baseline_value' => 'nullable|string|max:255',
+            'metrics.*.target_value' => 'nullable|string|max:255',
+            'metrics.*.final_value' => 'nullable|string|max:255',
+            'metrics.*.timeframe' => 'nullable|string|max:255',
+            'responsibilities' => 'nullable|string',
+            'project_type' => 'nullable|in:individual,led_project,team_contributor,other',
+            'teams_involved' => 'nullable|array',
+            'teams_involved.*' => 'string|max:255',
+            'collaboration_example' => 'nullable|string',
+            'challenges' => 'nullable|string',
+            'challenge_response' => 'nullable|string',
+            'tradeoffs' => 'nullable|string',
+            'outcome_summary' => 'nullable|string',
+            'impact' => 'nullable|string',
+            'recognition' => 'nullable|string',
+            'learning' => 'nullable|string',
+            'retro' => 'nullable|string',
+        ]);
+    }
 }
 

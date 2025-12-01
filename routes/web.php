@@ -38,6 +38,18 @@ Route::get('/candidate/form/{id}/view', function () {
     return view('candidate.form-view');
 });
 
+Route::get('/candidate/projects', function () {
+    return view('candidate.projects.index');
+});
+
+Route::get('/candidate/projects/new', function () {
+    return view('candidate.projects.form', ['project' => null]);
+});
+
+Route::get('/candidate/projects/{id}/edit', function ($id) {
+    return view('candidate.projects.form', ['projectId' => $id]);
+});
+
 Route::get('/recruiter/home', function () {
     return view('recruiter.home');
 });
