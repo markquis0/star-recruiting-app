@@ -63,24 +63,24 @@ class AssessmentService
         $answers = $assessment->answers()->with('question')->get();
 
         $categoryLabels = [
-            'analytical' => 'Analytical / Logical Thinking',
-            'creative' => 'Creative / Conceptual Thinking',
-            'pragmatic' => 'Pragmatic / Execution-Oriented Thinking',
-            'relational' => 'Relational / Collaborative Thinking',
+            'logic_reasoning' => 'Logic & Reasoning',
+            'conceptual_strategic' => 'Conceptual & Strategic Thinking',
+            'decision_prioritization' => 'Decision-Making & Prioritization',
+            'people_insight' => 'People Insight & Communication',
             'general' => 'General Aptitude',
         ];
 
         $categoryShortLabels = [
-            'analytical' => 'Analytical',
-            'creative' => 'Creative',
-            'pragmatic' => 'Pragmatic',
-            'relational' => 'Relational',
+            'logic_reasoning' => 'Logic & Reasoning',
+            'conceptual_strategic' => 'Conceptual & Strategic',
+            'decision_prioritization' => 'Decision-Making',
+            'people_insight' => 'People Insight',
             'general' => 'General',
         ];
 
         $categoryData = [];
-        $totalEvaluatedQuestions = 0;
-        $totalCorrect = 0;
+        $totalCorrectWeighted = 0;
+        $totalMaxWeighted = 0;
 
         foreach ($answers as $answer) {
             $question = $answer->question;
@@ -91,7 +91,8 @@ class AssessmentService
                     'label' => $categoryLabels[$categoryKey] ?? ucfirst($categoryKey),
                     'total_questions' => 0,
                     'evaluated_questions' => 0,
-                    'correct_points' => 0,
+                    'correct_points' => 0,  // weighted earned points
+                    'max_points' => 0,      // weighted max points
                     'open_responses' => 0,
                     'examples' => [],
                 ];
@@ -101,10 +102,17 @@ class AssessmentService
 
             if ($question && $question->question_type === 'multiple_choice' && $question->correct_answer) {
                 $categoryData[$categoryKey]['evaluated_questions']++;
-                $categoryData[$categoryKey]['correct_points'] += ($answer->score ?? 0);
 
-                $totalEvaluatedQuestions++;
-                $totalCorrect += ($answer->score ?? 0);
+                $weight = $question->weight ?? 1.0;
+
+                // Earned points = 1 or 0 times weight
+                $earned = ($answer->score ?? 0) * $weight;
+
+                $categoryData[$categoryKey]['correct_points'] += $earned;
+                $categoryData[$categoryKey]['max_points'] += $weight;
+
+                $totalCorrectWeighted += $earned;
+                $totalMaxWeighted += $weight;
             } else {
                 if (!empty(trim((string) $answer->answer))) {
                     $categoryData[$categoryKey]['open_responses']++;
@@ -115,18 +123,18 @@ class AssessmentService
             }
         }
 
+        // Calculate weighted overall accuracy
         $overallAccuracy = null;
-        if ($totalEvaluatedQuestions > 0) {
-            $overallAccuracy = round(($totalCorrect / $totalEvaluatedQuestions) * 100);
+        if ($totalMaxWeighted > 0) {
+            $overallAccuracy = round(($totalCorrectWeighted / $totalMaxWeighted) * 100);
         }
 
         $profileSummary = null;
         $rankedCategories = collect($categoryData)->map(function ($data, $key) {
-            $evaluated = $data['evaluated_questions'];
             $accuracy = null;
 
-            if ($evaluated > 0) {
-                $accuracy = $data['correct_points'] / $evaluated * 100;
+            if ($data['max_points'] > 0) {
+                $accuracy = ($data['correct_points'] / $data['max_points']) * 100;
             }
 
             return [
@@ -169,16 +177,15 @@ class AssessmentService
 
         $scoreSummary = [];
         foreach ($categoryData as $key => $data) {
-            $evaluated = $data['evaluated_questions'];
             $accuracy = null;
-            if ($evaluated > 0) {
-                $accuracy = round(($data['correct_points'] / $evaluated) * 100);
+            if ($data['max_points'] > 0) {
+                $accuracy = round(($data['correct_points'] / $data['max_points']) * 100);
             }
 
             $scoreSummary[$key] = [
                 'label' => $data['label'],
                 'total_questions' => $data['total_questions'],
-                'evaluated_questions' => $evaluated,
+                'evaluated_questions' => $data['evaluated_questions'],
                 'open_responses' => $data['open_responses'],
                 'accuracy' => $accuracy,
                 'examples' => $data['examples'],
