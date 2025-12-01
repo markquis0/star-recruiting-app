@@ -16,10 +16,12 @@ class Assessment extends Model
         'total_score',
         'category',
         'score_summary',
+        'aptitude_profile',
     ];
 
     protected $casts = [
         'score_summary' => 'array',
+        'aptitude_profile' => 'array',
     ];
 
     public function form(): BelongsTo

@@ -172,10 +172,17 @@ class CandidateController extends Controller
         }
 
         // Evaluate assessment
+        $assessmentService = app(AssessmentService::class);
+        
         if ($form->form_type === 'behavioral') {
-            app(AssessmentService::class)->evaluateBehavioral($assessment);
+            $assessmentService->evaluateBehavioral($assessment);
         } else {
-            app(AssessmentService::class)->evaluateAptitude($assessment);
+            // For aptitude, get the profile and save it
+            $profile = $assessmentService->evaluateAptitude($assessment);
+            $assessment->aptitude_profile = $profile;
+            $assessment->total_score = $profile['overall_accuracy'];
+            $assessment->category = $profile['dimensions'][$profile['strengths'][0] ?? 'general']['label'] ?? null;
+            $assessment->save();
         }
 
         $form->update(['status' => 'submitted']);

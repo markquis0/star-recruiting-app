@@ -58,151 +58,151 @@ class AssessmentService
         ]);
     }
 
-    public function evaluateAptitude(Assessment $assessment): void
+    /**
+     * Evaluate an aptitude assessment using weighted scoring.
+     *
+     * @param  \App\Models\Assessment  $assessment
+     * @return array
+     */
+    public function evaluateAptitude(Assessment $assessment): array
     {
-        $answers = $assessment->answers()->with('question')->get();
-
-        $categoryLabels = [
-            'logic_reasoning' => 'Logic & Reasoning',
-            'conceptual_strategic' => 'Conceptual & Strategic Thinking',
-            'decision_prioritization' => 'Decision-Making & Prioritization',
-            'people_insight' => 'People Insight & Communication',
-            'general' => 'General Aptitude',
+        // Aptitude dimensions (non-overlapping with behavioral assessment)
+        $dimensionLabels = [
+            'logic_reasoning'        => 'Logic & Reasoning',
+            'conceptual_strategic'   => 'Conceptual & Strategic Thinking',
+            'decision_prioritization'=> 'Decision-Making & Prioritization',
+            'people_insight'         => 'People Insight & Communication',
         ];
 
-        $categoryShortLabels = [
-            'logic_reasoning' => 'Logic & Reasoning',
-            'conceptual_strategic' => 'Conceptual & Strategic',
-            'decision_prioritization' => 'Decision-Making',
-            'people_insight' => 'People Insight',
-            'general' => 'General',
-        ];
-
+        // Initialize category data
         $categoryData = [];
-        $totalCorrectWeighted = 0;
-        $totalMaxWeighted = 0;
+        foreach ($dimensionLabels as $key => $label) {
+            $categoryData[$key] = [
+                'key'                 => $key,
+                'label'               => $label,
+                'evaluated_questions' => 0,
+                'correct_points'      => 0.0,  // weighted earned points
+                'max_points'          => 0.0,  // weighted max points
+                'open_responses'      => [],   // up to 2 examples (truncated)
+            ];
+        }
 
-        foreach ($answers as $answer) {
+        // Optional catch-all for legacy / misc traits
+        $categoryData['general'] = [
+            'key'                 => 'general',
+            'label'               => 'General',
+            'evaluated_questions' => 0,
+            'correct_points'      => 0.0,
+            'max_points'          => 0.0,
+            'open_responses'      => [],
+        ];
+
+        $totalCorrectWeighted = 0.0;
+        $totalMaxWeighted     = 0.0;
+
+        // Ensure questions are eager loaded: answers.question
+        $assessment->loadMissing('answers.question');
+
+        foreach ($assessment->answers as $answer) {
             $question = $answer->question;
-            $categoryKey = $question?->trait ?? 'general';
 
-            if (!isset($categoryData[$categoryKey])) {
-                $categoryData[$categoryKey] = [
-                    'label' => $categoryLabels[$categoryKey] ?? ucfirst($categoryKey),
-                    'total_questions' => 0,
-                    'evaluated_questions' => 0,
-                    'correct_points' => 0,  // weighted earned points
-                    'max_points' => 0,      // weighted max points
-                    'open_responses' => 0,
-                    'examples' => [],
-                ];
+            if (!$question) {
+                continue;
             }
 
-            $categoryData[$categoryKey]['total_questions']++;
+            // Determine which dimension this question belongs to
+            $categoryKey = $question->trait ?? 'general';
+            if (!isset($categoryData[$categoryKey])) {
+                // If we encounter an unexpected trait, group it under "general"
+                $categoryKey = 'general';
+            }
 
-            if ($question && $question->question_type === 'multiple_choice' && $question->correct_answer) {
-                $categoryData[$categoryKey]['evaluated_questions']++;
-
+            // Handle multiple-choice questions (weighted scoring)
+            if (
+                $question->question_type === 'multiple_choice'
+                && !empty($question->correct_answer)
+            ) {
                 $weight = $question->weight ?? 1.0;
+                if ($weight <= 0) {
+                    $weight = 1.0; // sane default
+                }
 
-                // Earned points = 1 or 0 times weight
-                $earned = ($answer->score ?? 0) * $weight;
+                // score is already 1 or 0 from submitAssessment
+                $rawScore = (float) ($answer->score ?? 0);
+                $earned   = $rawScore * $weight;
 
+                $categoryData[$categoryKey]['evaluated_questions']++;
                 $categoryData[$categoryKey]['correct_points'] += $earned;
-                $categoryData[$categoryKey]['max_points'] += $weight;
+                $categoryData[$categoryKey]['max_points']     += $weight;
 
                 $totalCorrectWeighted += $earned;
-                $totalMaxWeighted += $weight;
-            } else {
-                if (!empty(trim((string) $answer->answer))) {
-                    $categoryData[$categoryKey]['open_responses']++;
-                    if (count($categoryData[$categoryKey]['examples']) < 2) {
-                        $categoryData[$categoryKey]['examples'][] = mb_strimwidth($answer->answer, 0, 140, '…');
+                $totalMaxWeighted     += $weight;
+            }
+
+            // Handle open-ended questions (tracked but not scored)
+            if ($question->question_type === 'open_ended') {
+                if (count($categoryData[$categoryKey]['open_responses']) < 2) {
+                    $text = (string) ($answer->answer ?? '');
+
+                    // Truncate to 140 chars with ellipsis
+                    if (mb_strlen($text) > 140) {
+                        $text = mb_substr($text, 0, 140) . '...';
+                    }
+
+                    if ($text !== '') {
+                        $categoryData[$categoryKey]['open_responses'][] = $text;
                     }
                 }
             }
         }
 
-        // Calculate weighted overall accuracy
+        // Build normalized dimension results
+        $dimensions = [];
+
+        foreach ($categoryData as $key => $data) {
+            $maxPoints  = $data['max_points'];
+            $accuracy   = null;
+
+            if ($maxPoints > 0) {
+                $accuracy = round(($data['correct_points'] / $maxPoints) * 100);
+            }
+
+            // Use explicit label if defined, fall back to generated
+            $label = $data['label']
+                ?? ucfirst(str_replace('_', ' ', $key));
+
+            $dimensions[$key] = [
+                'label'               => $label,
+                'accuracy'            => $accuracy,                 // weighted %
+                'correct_points'      => $data['correct_points'],   // weighted earned
+                'max_points'          => $data['max_points'],       // weighted max
+                'evaluated_questions' => $data['evaluated_questions'],
+                'open_responses'      => $data['open_responses'],
+            ];
+        }
+
+        // Overall weighted accuracy
         $overallAccuracy = null;
         if ($totalMaxWeighted > 0) {
             $overallAccuracy = round(($totalCorrectWeighted / $totalMaxWeighted) * 100);
         }
 
-        $profileSummary = null;
-        $rankedCategories = collect($categoryData)->map(function ($data, $key) {
-            $accuracy = null;
+        // Derive top 2 strengths from the four main aptitude dimensions only
+        $strengths = collect($dimensions)
+            ->filter(function ($dim, $key) use ($dimensionLabels) {
+                return array_key_exists($key, $dimensionLabels) && !is_null($dim['accuracy']);
+            })
+            ->sortByDesc('accuracy')
+            ->take(2)
+            ->keys()
+            ->values()
+            ->all();
 
-            if ($data['max_points'] > 0) {
-                $accuracy = ($data['correct_points'] / $data['max_points']) * 100;
-            }
-
-            return [
-                'key' => $key,
-                'label' => $data['label'],
-                'short_label' => $data['label'],
-                'accuracy' => $accuracy,
-                'open_responses' => $data['open_responses'],
-            ];
-        })->values()->map(function ($item) use ($categoryShortLabels) {
-            $item['short_label'] = $categoryShortLabels[$item['key']] ?? $item['label'];
-            return $item;
-        })->sortByDesc(function ($item) {
-            if ($item['accuracy'] !== null) {
-                return $item['accuracy'];
-            }
-
-            // Treat open responses as moderate strength if no accuracy available
-            return $item['open_responses'] > 0 ? 55 : 0;
-        })->values();
-
-        $primary = $rankedCategories[0] ?? null;
-        $secondary = $rankedCategories[1] ?? null;
-        $additional = $rankedCategories->slice(2)->filter(function ($item) {
-            return $item['open_responses'] > 0;
-        })->pluck('short_label')->unique()->values();
-
-        if ($primary) {
-            $pieces = [$primary['short_label']];
-            if ($secondary) {
-                $pieces[] = $secondary['short_label'];
-            }
-
-            $profileSummary = implode(' + ', $pieces) . ' thinker';
-
-            if ($additional->isNotEmpty()) {
-                $profileSummary .= ', with ' . $additional->implode(' and ') . ' focus';
-            }
-        }
-
-        $scoreSummary = [];
-        foreach ($categoryData as $key => $data) {
-            $accuracy = null;
-            if ($data['max_points'] > 0) {
-                $accuracy = round(($data['correct_points'] / $data['max_points']) * 100);
-            }
-
-            $scoreSummary[$key] = [
-                'label' => $data['label'],
-                'total_questions' => $data['total_questions'],
-                'evaluated_questions' => $data['evaluated_questions'],
-                'open_responses' => $data['open_responses'],
-                'accuracy' => $accuracy,
-                'examples' => $data['examples'],
-            ];
-        }
-
-        $primaryCategoryLabel = $primary['label'] ?? null;
-
-        $assessment->update([
-            'total_score' => $overallAccuracy,
-            'category' => $primaryCategoryLabel,
-            'score_summary' => [
-                'categories' => $scoreSummary,
-                'overall_accuracy' => $overallAccuracy,
-                'profile_summary' => $profileSummary,
-            ],
-        ]);
+        return [
+            'overall_accuracy' => $overallAccuracy,
+            'strengths'        => $strengths,   // e.g. ['decision_prioritization','logic_reasoning']
+            'dimensions'       => $dimensions,  // keyed by trait
+        ];
     }
 }
 
