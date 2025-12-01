@@ -59,22 +59,6 @@ class AuthController extends Controller
                     ]);
                 }
 
-                // 🔐 Ensure a Passport Personal Access Client exists
-                try {
-                    $personalAccessClient = DB::table('oauth_clients')
-                        ->where('personal_access_client', true)
-                        ->select('id', 'secret')
-                        ->first();
-                } catch (\Exception $e) {
-                    Log::error('Error querying Passport client in register(): ' . $e->getMessage());
-                    throw new \Exception('Authentication service not properly configured. Please contact support.');
-                }
-
-                if (!$personalAccessClient) {
-                    Log::error('Passport Personal Access Client not found in register(). Make sure `php artisan passport:client --personal` has been run.');
-                    throw new \Exception('Authentication service not properly configured. Please contact support.');
-                }
-
                 // Create token - if this fails, the transaction will rollback
                 try {
                     $token = $user->createToken('StarRecruiting')->accessToken;
@@ -158,40 +142,6 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
 
-            Log::info('Login: Checking Passport client');
-
-            // 🔐 Ensure a Passport Personal Access Client exists
-            try {
-                $personalAccessClient = DB::table('oauth_clients')
-                    ->where('personal_access_client', true)
-                    ->select('id', 'secret')
-                    ->first();
-            } catch (\Exception $e) {
-                Log::error('Error querying Passport client in login(): ' . $e->getMessage());
-                return response()->json([
-                    'message' => 'Authentication service not properly configured. Please contact support.',
-                    'error' => 'passport_setup_failed',
-                    'error_details' => [
-                        'message' => $e->getMessage(),
-                        'type' => get_class($e)
-                    ]
-                ], 500);
-            }
-
-            Log::info('Login: Passport client check completed', [
-                'client_exists' => $personalAccessClient !== null,
-                'client_id' => $personalAccessClient ? $personalAccessClient->id : null,
-            ]);
-
-            if (!$personalAccessClient) {
-                Log::error('Passport Personal Access Client not found in login(). Make sure `php artisan passport:client --personal` has been run.');
-                return response()->json([
-                    'message' => 'Authentication service not properly configured. Please contact support.',
-                    'error' => 'passport_client_missing',
-                    'debug' => config('app.debug') ? 'No Passport Personal Access Client found in oauth_clients' : null
-                ], 500);
-            }
-
             Log::info('Login: Creating token');
             try {
                 $token = $user->createToken('StarRecruiting')->accessToken;
@@ -202,19 +152,6 @@ class AuthController extends Controller
                     'user_id' => $user->id,
                     'exception_class' => get_class($tokenException)
                 ]);
-                
-                $clientCheck = DB::table('oauth_clients')
-                    ->where('personal_access_client', true)
-                    ->first();
-                
-                if (!$clientCheck) {
-                    Log::error('Login: No Passport client found after token creation failure');
-                    return response()->json([
-                        'message' => 'Authentication service configuration error. Please contact support.',
-                        'error' => 'passport_client_missing',
-                        'debug' => config('app.debug') ? 'No Passport Personal Access Client found in database' : null
-                    ], 500);
-                }
                 
                 return response()->json([
                     'message' => 'Failed to generate authentication token. Please try again.',
