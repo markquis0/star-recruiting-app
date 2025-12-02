@@ -43,10 +43,6 @@ Route::get('/candidate/form/{id}/view', function () {
     return view('candidate.form-view');
 });
 
-Route::get('/candidate/projects', function () {
-    return view('candidate.projects.index');
-});
-
 Route::get('/candidate/projects/new', function () {
     return view('candidate.projects.form', ['project' => null]);
 });

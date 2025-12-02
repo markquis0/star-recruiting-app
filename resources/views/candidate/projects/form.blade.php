@@ -221,7 +221,7 @@
                 populateForm(existingProject.data || {});
             } else if (response.status === 404) {
                 // Project not found, redirect to projects list
-                window.location.href = '/candidate/projects';
+                window.location.href = '/candidate/home';
             }
         } catch (error) {
             console.error('Error loading project:', error);
@@ -405,7 +405,7 @@
                 }
                 
                 setTimeout(() => {
-                    window.location.href = '/candidate/projects';
+                    window.location.href = '/candidate/home';
                 }, 1500);
             } else {
                 document.getElementById('form-success').style.display = 'none';

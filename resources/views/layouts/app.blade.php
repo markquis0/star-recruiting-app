@@ -208,6 +208,15 @@
             font-size: 1.1rem;
         }
 
+        .card-header h1,
+        .card-header h2,
+        .card-header h3,
+        .card-header h4,
+        .card-header h5,
+        .card-header h6 {
+            color: #fff !important;
+        }
+
         .card-body {
             padding: 1.5rem;
         }
@@ -611,7 +620,6 @@
                     '/register': 'register',
                     '/candidate/home': 'candidate_dashboard',
                     '/candidate/settings': 'candidate_settings',
-                    '/candidate/projects': 'candidate_projects',
                     '/candidate/projects/new': 'candidate_project_form',
                     '/recruiter/home': 'recruiter_dashboard',
                     '/recruiter/settings': 'recruiter_settings',
@@ -624,7 +632,10 @@
                 
                 // Check for dynamic routes
                 if (path.startsWith('/candidate/projects/') && path !== '/candidate/projects/new') {
-                    return 'candidate_project_edit';
+                    // Check if it's an edit route (has /edit at the end)
+                    if (path.includes('/edit')) {
+                        return 'candidate_project_edit';
+                    }
                 }
                 if (path.startsWith('/candidate/assessment/')) {
                     return 'candidate_assessment';
