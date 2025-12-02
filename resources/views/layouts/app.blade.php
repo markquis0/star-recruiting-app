@@ -35,6 +35,7 @@
             background: var(--bg-gradient) !important;
             box-shadow: 0 4px 20px rgba(63, 30, 111, 0.2);
             padding: 1rem 0;
+            min-height: 80px;
         }
 
         /* Dashboard Layout */
@@ -151,6 +152,8 @@
             font-size: 1.5rem;
             text-decoration: none;
             transition: transform 0.2s ease;
+            background: transparent !important;
+            padding: 0;
         }
 
         .navbar-brand:hover {
@@ -159,8 +162,10 @@
         }
 
         .navbar-brand img {
-            height: 40px;
+            height: 56px;
             width: auto;
+            display: block;
+            object-fit: contain;
         }
 
         .navbar-nav .nav-link {
@@ -463,7 +468,7 @@
             }
             
             .navbar-brand img {
-                height: 32px;
+                height: 40px;
             }
 
             .dashboard-container {
@@ -487,7 +492,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/" id="home-link">
-                <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" id="logo-img" style="height: 40px; width: auto;" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='inline';">
+                <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" id="logo-img" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='inline';">
                 <span id="logo-text" style="display: none;">star recruiting</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
