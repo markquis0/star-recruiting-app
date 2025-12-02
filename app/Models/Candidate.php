@@ -57,6 +57,11 @@ class Candidate extends Model
           ->latest('assessments.created_at');
     }
 
+    public function shortLink()
+    {
+        return $this->hasOne(ShortLink::class);
+    }
+
     public function getFullNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";

@@ -6,6 +6,7 @@ use App\Models\Form;
 use App\Models\Assessment;
 use App\Models\AssessmentType;
 use App\Models\AssessmentQuestion;
+use App\Models\ShortLink;
 use App\Services\AssessmentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -501,6 +502,18 @@ class CandidateController extends Controller
     }
 
     /**
+     * Generate a unique short code for profile links.
+     */
+    protected function generateShortCode(): string
+    {
+        do {
+            $code = Str::random(6); // 6 chars: ~2B combinations
+        } while (ShortLink::where('short_code', $code)->exists());
+
+        return $code;
+    }
+
+    /**
      * Get current public profile status and URL.
      */
     public function getPublicProfile(Request $request): JsonResponse
@@ -514,12 +527,17 @@ class CandidateController extends Controller
         $candidate = $user->candidate;
 
         $active = $candidate->public_profile_active;
-        $token = $candidate->public_profile_token;
         $expires = $candidate->public_profile_expires_at;
+        $shortLink = $candidate->shortLink;
 
         $url = null;
-        if ($active && $token && (!$expires || now()->lt($expires))) {
-            $url = config('app.url') . '/profile/' . $token;
+        if ($active && (!$expires || now()->lt($expires))) {
+            if ($shortLink) {
+                $url = config('app.url') . '/profile/' . $shortLink->short_code;
+            } elseif ($candidate->public_profile_token) {
+                // Fallback to long token if short link hasn't been created yet
+                $url = config('app.url') . '/profile/' . $candidate->public_profile_token;
+            }
         }
 
         return response()->json([
@@ -542,16 +560,27 @@ class CandidateController extends Controller
 
         $candidate = $user->candidate;
 
-        // Generate a new token; this invalidates any old link
+        // Generate the underlying long token (for security / compatibility)
         $candidate->public_profile_token = Str::random(48);
         $candidate->public_profile_active = true;
 
-        // Optional: set an expiry, e.g. 90 days from now
+        // Optional: set expiry
         // $candidate->public_profile_expires_at = now()->addDays(90);
 
         $candidate->save();
 
-        $url = config('app.url') . '/profile/' . $candidate->public_profile_token;
+        // Create or update a short link for this candidate
+        $shortCode = $this->generateShortCode();
+
+        ShortLink::updateOrCreate(
+            ['candidate_id' => $candidate->id],
+            [
+                'short_code' => $shortCode,
+                'full_token' => $candidate->public_profile_token,
+            ]
+        );
+
+        $url = config('app.url') . '/profile/' . $shortCode;
 
         return response()->json([
             'active' => true,
