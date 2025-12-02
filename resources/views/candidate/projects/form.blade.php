@@ -10,7 +10,7 @@
                 <h2>{{ isset($projectId) ? 'Edit Project' : 'Add a Project' }}</h2>
                 <p class="text-muted mb-0">Share a project that demonstrates your experience and impact.</p>
             </div>
-            <a href="/candidate/projects" class="btn btn-sm btn-secondary">Back to Projects</a>
+            <a href="/candidate/home" class="btn btn-sm btn-secondary">Back to Dashboard</a>
         </div>
 
         <div class="mb-3">
