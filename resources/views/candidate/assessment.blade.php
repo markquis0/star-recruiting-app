@@ -13,8 +13,8 @@
                         <p>Loading questions...</p>
                     </div>
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">Submit Assessment</button>
-                        <a href="/candidate/home" class="btn btn-secondary btn-lg ms-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary btn-lg btn-touch">Submit Assessment</button>
+                        <a href="/candidate/home" class="btn btn-secondary btn-lg ms-2 btn-touch">Cancel</a>
                     </div>
                 </form>
                 </div>

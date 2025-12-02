@@ -8,7 +8,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 id="assessment-title">Assessment Results</h2>
-                <a href="/candidate/home" class="btn btn-sm btn-secondary">Back to Dashboard</a>
+                <a href="/candidate/home" class="btn btn-sm btn-secondary btn-touch">Back to Dashboard</a>
             </div>
             <div class="section-wrapper">
             <div class="card">
@@ -63,7 +63,7 @@
                 
                 let html = `
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label fw-bold" style="font-size: 0.875rem;">Status</label>
                             <div>
                                 <span class="badge" style="background: ${form.status === 'submitted' ? '#10b981' : (form.status === 'reviewed' ? '#3b82f6' : '#f59e0b')}; color: white; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem;">
@@ -71,7 +71,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label fw-bold" style="font-size: 0.875rem;">Review Count</label>
                             <div style="font-size: 0.875rem; line-height: 1.6;">${form.review_count || 0}</div>
                         </div>
@@ -85,7 +85,7 @@
                             <div class="mb-4">
                                 <h5 style="font-size: 1rem; margin-bottom: 1rem;">Your Behavioral Profile</h5>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label fw-bold" style="font-size: 0.875rem;">Primary Category</label>
                                         <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
                                             <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.category || 'N/A'}</h4>
@@ -104,7 +104,7 @@
                             const score = scores[trait] || 0;
                             const percentage = score;
                             html += `
-                                <div class="col-md-6 mb-3">
+                                <div class="col-12 col-md-6 mb-3">
                                     <label class="form-label fw-bold" style="font-size: 0.875rem;">${trait.charAt(0).toUpperCase() + trait.slice(1)}</label>
                                     <div class="progress" style="height: 24px;">
                                         <div class="progress-bar" role="progressbar" style="width: ${percentage}%; font-size: 0.75rem; line-height: 24px;" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100">
@@ -129,13 +129,13 @@
                             <div class="mb-4">
                                 <h5 style="font-size: 1rem; margin-bottom: 1rem;">Your Aptitude Results</h5>
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label fw-bold" style="font-size: 0.875rem;">Primary Strength</label>
                                         <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
                                             <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.category || 'Pending Review'}</h4>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label fw-bold" style="font-size: 0.875rem;">Overall Accuracy</label>
                                         <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
                                             <h4 class="mb-0" style="font-size: 1.25rem;">${overallAccuracy !== null && overallAccuracy !== undefined ? `${overallAccuracy}%` : 'Pending Review'}</h4>

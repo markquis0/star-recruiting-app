@@ -13,14 +13,14 @@
             </div>
             <div class="card-body">
                 <form id="search-form">
-                    <div class="row">
-                        <div class="col-md-3">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-3">
                             <input type="text" class="form-control" name="role" placeholder="Role Title">
                         </div>
-                        <div class="col-md-3">
-                            <input type="number" class="form-control" name="years_exp" placeholder="Min Years Experience" min="0">
+                        <div class="col-6 col-md-2">
+                            <input type="number" class="form-control" name="years_exp" placeholder="Min Years" min="0">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-6 col-md-3">
                             <select class="form-select" name="behavioral_category">
                                 <option value="">All Behavioral Categories</option>
                                 <option value="Analytical">Analytical</option>
@@ -29,7 +29,7 @@
                                 <option value="Social">Social</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-12 col-md-3">
                             <select class="form-select" name="aptitude_category">
                                 <option value="">All Aptitude Categories</option>
                                 <option value="High Aptitude">High Aptitude</option>
@@ -37,8 +37,10 @@
                                 <option value="Low Aptitude">Low Aptitude</option>
                             </select>
                         </div>
+                        <div class="col-12 col-md-1 d-grid">
+                            <button type="submit" class="btn btn-primary btn-touch w-100">Search</button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-3">Search</button>
                 </form>
             </div>
         </div>
@@ -103,8 +105,8 @@
                                         <p>Experience: ${candidate.years_exp || 0} years</p>
                                     </div>
                                     <div>
-                                        <a href="/recruiter/candidate/${candidate.id}" class="btn btn-sm btn-primary me-2">View Profile</a>
-                                        <button class="btn btn-sm btn-danger" onclick="removeSavedCandidate(${saved.id})">Remove</button>
+                                        <a href="/recruiter/candidate/${candidate.id}" class="btn btn-sm btn-primary me-2 btn-touch">View Profile</a>
+                                        <button class="btn btn-sm btn-danger btn-touch" onclick="removeSavedCandidate(${saved.id})">Remove</button>
                                     </div>
                                 </div>
                             </div>
@@ -194,8 +196,8 @@
                                         ${aptitudeAssessment ? `<p class="mb-1"><strong>Aptitude Category:</strong> ${aptitudeAssessment.assessment.category || 'N/A'} (Score: ${aptitudeAssessment.assessment.total_score || 0}%)</p>` : ''}
                                     </div>
                                     <div>
-                                        <a href="/recruiter/candidate/${candidate.id}" class="btn btn-sm btn-primary me-2">View Profile</a>
-                                        <button class="btn btn-sm btn-success" onclick="saveCandidate(${candidate.id})">Save Candidate</button>
+                                        <a href="/recruiter/candidate/${candidate.id}" class="btn btn-sm btn-primary me-2 btn-touch">View Profile</a>
+                                        <button class="btn btn-sm btn-success btn-touch" onclick="saveCandidate(${candidate.id})">Save Candidate</button>
                                     </div>
                                 </div>
                             </div>

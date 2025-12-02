@@ -40,17 +40,24 @@
                     </p>
                 @endif
                 
+                {{-- Confidence is internal; don't show on public profile --}}
+                {{--
                 @if(!empty($aptitudeProfile['confidence']))
                     <p class="mb-2">
                         <strong>Confidence:</strong> {{ ucfirst($aptitudeProfile['confidence']) }}
                     </p>
                 @endif
+                --}}
 
                 @if(!empty($aptitudeProfile['dimensions']))
                     <div class="mt-3">
                         <p class="small text-muted text-uppercase mb-2">Dimensions</p>
                         <ul class="list-unstyled mb-0">
                             @foreach($aptitudeProfile['dimensions'] as $key => $dim)
+                                @if($key === 'general')
+                                    @continue
+                                @endif
+
                                 <li class="mb-1">
                                     <strong>{{ $dim['label'] ?? ucfirst(str_replace('_', ' ', $key)) }}:</strong>
                                     {{ $dim['accuracy'] ?? 'N/A' }}%

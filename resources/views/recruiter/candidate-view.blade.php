@@ -303,7 +303,7 @@
                 html += `
                     <hr style="border-color: rgba(255, 255, 255, 0.1); margin: 1rem 0;">
                     <div class="mt-4">
-                        <button id="save-remove-btn" class="btn btn-success" onclick="toggleSaveCandidate(${candidate.id})">Save Candidate</button>
+                        <button id="save-remove-btn" class="btn btn-success btn-touch" onclick="toggleSaveCandidate(${candidate.id})">Save Candidate</button>
                     </div>
                 `;
                 
@@ -353,11 +353,11 @@
         const btn = document.getElementById('save-remove-btn');
         if (btn) {
             if (isNotSaved) {
-                btn.className = 'btn btn-success';
+                btn.className = 'btn btn-success btn-touch';
                 btn.textContent = 'Save Candidate';
                 btn.onclick = () => saveCandidate(currentCandidateId);
             } else {
-                btn.className = 'btn btn-danger';
+                btn.className = 'btn btn-danger btn-touch';
                 btn.textContent = 'Remove from Saved';
                 btn.onclick = () => removeSavedCandidate(savedCandidateId);
             }

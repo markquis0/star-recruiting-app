@@ -20,10 +20,10 @@
                 <div id="public-profile-status" class="mb-3"></div>
 
                 <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="generatePublicProfile()">
+                    <button type="button" class="btn btn-primary btn-sm btn-touch" onclick="generatePublicProfile()">
                         Generate / Regenerate Link
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="disablePublicProfile()">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-touch" onclick="disablePublicProfile()">
                         Disable Link
                     </button>
                 </div>
@@ -37,20 +37,20 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <a href="/candidate/projects/new" class="btn btn-primary w-100">
+                    <div class="col-12 col-md-4 mb-3">
+                        <a href="/candidate/projects/new" class="btn btn-primary w-100 btn-touch">
                             <strong>Project</strong><br>
                             <small>Share your project experience</small>
                         </a>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <button id="behavioral-btn" class="btn btn-success w-100" onclick="createForm('behavioral')">
+                    <div class="col-12 col-md-4 mb-3">
+                        <button id="behavioral-btn" class="btn btn-success w-100 btn-touch" onclick="createForm('behavioral')">
                             <strong>Behavioral Assessment</strong><br>
                             <small>Rate yourself on key traits</small>
                         </button>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <button id="aptitude-btn" class="btn btn-info w-100" onclick="createForm('aptitude')">
+                    <div class="col-12 col-md-4 mb-3">
+                        <button id="aptitude-btn" class="btn btn-info w-100 btn-touch" onclick="createForm('aptitude')">
                             <strong>Aptitude Test</strong><br>
                             <small>Test your skills</small>
                         </button>

@@ -28,11 +28,11 @@
                     
                     <h6 class="mb-3">Profile Information</h6>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="first_name" class="form-label">First Name</label>
                             <input type="text" class="form-control" id="first_name" name="first_name" required>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-12 col-md-6 mb-3">
                             <label for="last_name" class="form-label">Last Name</label>
                             <input type="text" class="form-control" id="last_name" name="last_name" required>
                         </div>
@@ -52,8 +52,8 @@
                     <div id="settings-success" class="alert alert-success" style="display: none;"></div>
                     
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
-                        <a href="/candidate/home" class="btn btn-secondary btn-lg ms-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary btn-lg btn-touch">Save Changes</button>
+                        <a href="/candidate/home" class="btn btn-secondary btn-lg ms-2 btn-touch">Cancel</a>
                     </div>
                 </form>
             </div>

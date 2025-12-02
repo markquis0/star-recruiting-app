@@ -7,7 +7,7 @@
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Your Projects</h2>
-            <a href="/candidate/projects/new" class="btn btn-primary">
+            <a href="/candidate/projects/new" class="btn btn-primary btn-touch">
                 + Add Project
             </a>
         </div>
@@ -67,7 +67,7 @@
                     <div class="card">
                         <div class="card-body text-center py-5">
                             <p class="text-muted mb-3">You haven't added any projects yet.</p>
-                            <a href="/candidate/projects/new" class="btn btn-primary">Add Your First Project</a>
+                            <a href="/candidate/projects/new" class="btn btn-primary btn-touch">Add Your First Project</a>
                         </div>
                     </div>
                 `;
@@ -131,7 +131,7 @@
                                     ${metricsHtml}
                                 </div>
                                 <div class="text-end ms-3">
-                                    <a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-primary mb-2 d-block">Edit</a>
+                                    <a href="/candidate/projects/${form.id}/edit" class="btn btn-sm btn-primary mb-2 d-block btn-touch">Edit</a>
                                     <p class="text-muted small mb-0" style="font-size: 0.75rem;">
                                         Updated ${new Date(form.updated_at).toLocaleDateString()}
                                     </p>

@@ -172,11 +172,11 @@
                     <div id="form-success" class="alert alert-success" style="display: none;"></div>
                 </form>
 
-                <div class="mt-4 d-flex justify-content-between">
-                    <button type="button" id="prev-btn" class="btn btn-secondary" disabled>Back</button>
+                <div class="mt-4 d-flex justify-content-between wizard-nav">
+                    <button type="button" id="prev-btn" class="btn btn-secondary btn-touch" disabled>Back</button>
                     <div>
-                        <button type="button" id="next-btn" class="btn btn-primary">Next</button>
-                        <button type="button" id="submit-btn" class="btn btn-primary" style="display:none;">
+                        <button type="button" id="next-btn" class="btn btn-primary btn-touch">Next</button>
+                        <button type="button" id="submit-btn" class="btn btn-primary btn-touch" style="display:none;">
                             {{ isset($projectId) ? 'Update Project' : 'Submit Project' }}
                         </button>
                     </div>
@@ -318,22 +318,20 @@
                 <label class="form-label small">Metric name</label>
                 <input type="text" class="form-control form-control-sm metric-name" value="${metric.metric_name || ''}" placeholder="e.g., Support tickets per week">
             </div>
-            <div class="row mb-2">
-                <div class="col-md-6">
+            <div class="row g-2 mb-2">
+                <div class="col-12 col-md-4">
                     <label class="form-label small">Baseline</label>
                     <input type="text" class="form-control form-control-sm metric-baseline" value="${metric.baseline_value || ''}">
                 </div>
-                <div class="col-md-6">
+                <div class="col-6 col-md-4">
                     <label class="form-label small">Target</label>
                     <input type="text" class="form-control form-control-sm metric-target" value="${metric.target_value || ''}">
                 </div>
-            </div>
-            <div class="row mb-2">
-                <div class="col-md-6">
+                <div class="col-6 col-md-4">
                     <label class="form-label small">Final</label>
                     <input type="text" class="form-control form-control-sm metric-final" value="${metric.final_value || ''}">
                 </div>
-                <div class="col-md-6">
+                <div class="col-12">
                     <label class="form-label small">Timeframe</label>
                     <input type="text" class="form-control form-control-sm metric-timeframe" value="${metric.timeframe || ''}" placeholder="e.g., 3 months after launch">
                 </div>

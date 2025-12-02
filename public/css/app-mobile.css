@@ -1,0 +1,87 @@
+/* Mobile-First Optimizations for Star Recruiting */
+
+/* Small phones: up to 576px */
+@media (max-width: 576px) {
+    /* Global padding */
+    body {
+        padding-bottom: 60px;
+    }
+
+    /* Headings slightly smaller to avoid wrapping awkwardly */
+    h1, .h1 { font-size: 1.6rem; }
+    h2, .h2 { font-size: 1.4rem; }
+    h3, .h3 { font-size: 1.2rem; }
+    h4, .h4 { font-size: 1.1rem; }
+    h5, .h5 { font-size: 1rem; }
+
+    /* Card spacing */
+    .card {
+        margin-bottom: 1rem;
+        border-radius: 0.75rem;
+    }
+
+    /* Reduce padding in header */
+    .navbar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        min-height: 64px;
+    }
+
+    /* Table text slightly smaller */
+    .table {
+        font-size: 0.85rem;
+    }
+
+    /* Metric rows - smaller font */
+    .metric-row .form-control {
+        font-size: 0.85rem;
+    }
+
+    /* Wizard navigation - sticky bottom */
+    .wizard-nav {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        padding-top: 0.5rem;
+        padding-bottom: 0.75rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+        z-index: 10;
+    }
+}
+
+/* Tablets: up to 768px */
+@media (max-width: 768px) {
+    /* Reduce horizontal padding in main containers */
+    .container,
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Nav items smaller gap */
+    .navbar-nav {
+        gap: 0.5rem;
+    }
+}
+
+/* Mobile-friendly button/touch sizes */
+.btn-touch,
+.btn-sm.btn-touch {
+    min-height: 44px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+/* Links styled as buttons */
+.link-touch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+}
+
