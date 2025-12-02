@@ -87,7 +87,7 @@
                                 <div class="row">
                                     <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label fw-bold" style="font-size: 0.875rem;">Primary Category</label>
-                                        <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
+                                        <div class="p-3 rounded" style="background: #2A2A5A; color: #FFFFFF;">
                                             <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.category || 'N/A'}</h4>
                                         </div>
                                     </div>
@@ -131,13 +131,13 @@
                                 <div class="row">
                                     <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label fw-bold" style="font-size: 0.875rem;">Primary Strength</label>
-                                        <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
+                                        <div class="p-3 rounded" style="background: #2A2A5A; color: #FFFFFF;">
                                             <h4 class="mb-0" style="font-size: 1.25rem;">${assessment.category || 'Pending Review'}</h4>
                                         </div>
                                     </div>
                                     <div class="col-12 col-md-6 mb-3">
                                         <label class="form-label fw-bold" style="font-size: 0.875rem;">Overall Accuracy</label>
-                                        <div class="p-3 rounded" style="background: #2A2A5A; color: #FF3B6B;">
+                                        <div class="p-3 rounded" style="background: #2A2A5A; color: #FFFFFF;">
                                             <h4 class="mb-0" style="font-size: 1.25rem;">${overallAccuracy !== null && overallAccuracy !== undefined ? `${overallAccuracy}%` : 'Pending Review'}</h4>
                                         </div>
                                     </div>
