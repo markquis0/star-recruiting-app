@@ -43,13 +43,6 @@
             width: auto;
         }
 
-        .landing-navbar-brand h1 {
-            font-size: 1.75rem;
-            font-weight: 900;
-            color: #FF3B6B;
-            margin: 0;
-        }
-
         .landing-navbar-links {
             display: flex;
             gap: 1.5rem;
@@ -330,7 +323,6 @@
     <nav class="landing-navbar">
         <a href="/" class="landing-navbar-brand">
             <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" onerror="this.style.display='none';">
-            <h1>star recruiting</h1>
         </a>
         <div class="landing-navbar-links">
             <a href="#features">Features</a>
