@@ -489,7 +489,11 @@
     </style>
 
     {{-- Mixpanel Analytics --}}
-    @if (app()->environment('production') && config('services.mixpanel.token'))
+    @php
+        $mixpanelToken = config('services.mixpanel.token');
+        $shouldLoadMixpanel = !empty($mixpanelToken);
+    @endphp
+    @if ($shouldLoadMixpanel)
     <script type="text/javascript">
         (function(f,b){
             if(!b.__SV){
@@ -524,39 +528,82 @@
                 a.type="text/javascript";
                 a.async=!0;
                 a.src="https://cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";
+                a.onerror=function(){
+                    console.error("[Mixpanel] Failed to load Mixpanel script");
+                };
                 e=f.getElementsByTagName("script")[0];
                 e.parentNode.insertBefore(a,e)
             }
         })(document,window.mixpanel||[]);
 
-        mixpanel.init("{{ config('services.mixpanel.token') }}");
-
-        @auth
-            @php
-                $user = auth()->user();
-                $profile = $user->candidate ?? $user->recruiter ?? null;
-            @endphp
-            mixpanel.identify("{{ $user->id }}");
-            mixpanel.people.set({
-                "User ID": "{{ $user->id }}",
-                @if($profile && isset($profile->email) && $profile->email)
-                    "Email": "{{ $profile->email }}",
-                @endif
-                @if($profile && isset($profile->first_name))
-                    "Name": "{{ $profile->first_name }} {{ $profile->last_name ?? '' }}",
-                @endif
-                "Role": "{{ $user->role ?? 'unknown' }}",
+        // Initialize Mixpanel with token
+        try {
+            mixpanel.init("{{ $mixpanelToken }}", {
+                debug: {{ app()->environment('local') ? 'true' : 'false' }},
+                loaded: function(mixpanel) {
+                    console.log("[Mixpanel] Initialized successfully");
+                }
             });
-        @endauth
 
-        mixpanel.register({
-            "App Version": "{{ config('app.version', '1.0') }}",
-            "Environment": "{{ app()->environment() }}",
-        });
+            @auth
+                @php
+                    $user = auth()->user();
+                    $profile = $user->candidate ?? $user->recruiter ?? null;
+                    $userName = '';
+                    $userEmail = '';
+                    if ($profile) {
+                        if (isset($profile->first_name)) {
+                            $userName = $profile->first_name . ' ' . ($profile->last_name ?? '');
+                        }
+                        if (isset($profile->email) && $profile->email) {
+                            $userEmail = $profile->email;
+                        }
+                    }
+                @endphp
+                mixpanel.identify("{{ $user->id }}");
+                mixpanel.people.set({
+                    "User ID": "{{ $user->id }}",
+                    @if(!empty($userEmail))
+                    "Email": "{{ $userEmail }}",
+                    @endif
+                    @if(!empty($userName))
+                    "Name": "{{ $userName }}",
+                    @endif
+                    "Role": "{{ $user->role ?? 'unknown' }}",
+                });
+            @endauth
 
-        function trackEvent(eventName, eventData = {}) {
-            mixpanel.track(eventName, eventData);
+            mixpanel.register({
+                "App Version": "{{ config('app.version', '1.0') }}",
+                "Environment": "{{ app()->environment() }}",
+            });
+
+            // Global trackEvent helper function
+            function trackEvent(eventName, eventData = {}) {
+                if (typeof mixpanel !== 'undefined' && mixpanel.track) {
+                    try {
+                        mixpanel.track(eventName, eventData);
+                    } catch (e) {
+                        console.error("[Mixpanel] Error tracking event:", e);
+                    }
+                } else {
+                    console.warn("[Mixpanel] trackEvent called but Mixpanel not loaded:", eventName);
+                }
+            }
+
+            // Make trackEvent available globally
+            window.trackEvent = trackEvent;
+        } catch (e) {
+            console.error("[Mixpanel] Initialization error:", e);
         }
+    </script>
+    @else
+    <script type="text/javascript">
+        // Stub function when Mixpanel is not loaded
+        function trackEvent(eventName, eventData = {}) {
+            console.log("[Mixpanel] Not loaded - would track:", eventName, eventData);
+        }
+        window.trackEvent = trackEvent;
     </script>
     @endif
 
