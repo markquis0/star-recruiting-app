@@ -308,6 +308,13 @@
                 `;
                 
                 container.innerHTML = html;
+
+                // Track candidate profile view with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    trackEvent('Candidate Profile Viewed', {
+                        candidateId: candidate.id,
+                    });
+                }
                 
                 // Check if candidate is already saved
                 checkIfSaved(candidate.id);
@@ -378,6 +385,15 @@
 
             if (response.ok) {
                 await response.json();
+
+                // Track candidate save with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    trackEvent('Candidate Saved', {
+                        candidateId: candidateId,
+                        context: 'candidate_profile',
+                    });
+                }
+
                 await showAppModal({
                     title: 'Candidate Saved',
                     message: 'Candidate saved successfully.',
@@ -427,6 +443,15 @@
             if (response.ok) {
                 await response.json();
                 savedCandidateId = null;
+
+                // Track candidate removal with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    trackEvent('Candidate Removed From Saved', {
+                        candidateId: currentCandidateId,
+                        context: 'candidate_profile',
+                    });
+                }
+
                 await showAppModal({
                     title: 'Candidate Removed',
                     message: 'Candidate removed from your saved list.',

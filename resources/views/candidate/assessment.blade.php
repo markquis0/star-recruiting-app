@@ -251,6 +251,16 @@
             const result = await response.json();
             
             if (response.ok) {
+                // Track assessment completion with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    const params = new URLSearchParams(window.location.search);
+                    const type = params.get('type') || 'unknown';
+
+                    trackEvent('Assessment Completed', {
+                        assessmentType: type,
+                    });
+                }
+
                 await showAppModal({
                     title: 'Assessment Submitted',
                     message: 'Your assessment has been submitted successfully.',
@@ -271,6 +281,18 @@
                 title: 'Submission Error',
                 message: error.message,
                 variant: 'danger'
+            });
+        }
+    });
+    
+    // Track assessment start when questions page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof trackEvent === 'function') {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type') || 'unknown';
+
+            trackEvent('Assessment Started', {
+                assessmentType: type,
             });
         }
     });

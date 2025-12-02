@@ -176,6 +176,18 @@
         })
         .then(data => {
             console.log('Search results:', data); // Debug log
+
+            // Track recruiter search with Mixpanel (if available)
+            if (typeof trackEvent === 'function' && data.candidates) {
+                trackEvent('Recruiter Search Performed', {
+                    role: params.get('role') || null,
+                    years_exp: params.get('years_exp') ? parseInt(params.get('years_exp'), 10) : null,
+                    behavioral_category: params.get('behavioral_category') || null,
+                    aptitude_category: params.get('aptitude_category') || null,
+                    results_count: data.candidates.length,
+                });
+            }
+
             if (data.candidates && data.candidates.length > 0) {
                 searchResultsContainer.innerHTML = data.candidates.map(candidate => {
                     const user = candidate.user || {};
@@ -228,6 +240,15 @@
 
             if (response.ok) {
                 await response.json();
+
+                // Track candidate save with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    trackEvent('Candidate Saved', {
+                        candidateId: candidateId,
+                        context: 'recruiter_dashboard',
+                    });
+                }
+
                 await showAppModal({
                     title: 'Candidate Saved',
                     message: 'Candidate saved to your list successfully.',
@@ -276,6 +297,15 @@
 
             if (response.ok) {
                 await response.json();
+
+                // Track candidate removal with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    trackEvent('Candidate Removed From Saved', {
+                        savedCandidateId: savedCandidateId,
+                        context: 'recruiter_dashboard',
+                    });
+                }
+
                 await showAppModal({
                     title: 'Candidate Removed',
                     message: 'Candidate removed from your saved list.',
@@ -299,6 +329,13 @@
             });
         }
     }
+
+    // Track recruiter dashboard view (candidate list view) on load
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof trackEvent === 'function') {
+            trackEvent('Recruiter Dashboard Viewed', {});
+        }
+    });
     
     loadSavedCandidates();
 </script>

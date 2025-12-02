@@ -393,6 +393,13 @@
                 document.getElementById('form-error').style.display = 'none';
                 document.getElementById('form-success').textContent = 'Project saved successfully! Redirecting...';
                 document.getElementById('form-success').style.display = 'block';
+
+                // Track project submission with Mixpanel (if available)
+                if (typeof trackEvent === 'function') {
+                    trackEvent('Project Submitted', {
+                        projectId: result.project?.id ?? null,
+                    });
+                }
                 
                 setTimeout(() => {
                     window.location.href = '/candidate/projects';
