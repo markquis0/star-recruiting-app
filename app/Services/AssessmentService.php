@@ -74,7 +74,7 @@ class AssessmentService
             'people_insight'         => 'People Insight & Communication',
         ];
 
-        // Initialize category data
+        // Initialize category data for the four main aptitude dimensions
         $categoryData = [];
         foreach ($dimensionLabels as $key => $label) {
             $categoryData[$key] = [
@@ -86,16 +86,6 @@ class AssessmentService
                 'open_responses'      => [],   // up to 2 examples (truncated)
             ];
         }
-
-        // Optional catch-all for legacy / misc traits
-        $categoryData['general'] = [
-            'key'                 => 'general',
-            'label'               => 'General',
-            'evaluated_questions' => 0,
-            'correct_points'      => 0.0,
-            'max_points'          => 0.0,
-            'open_responses'      => [],
-        ];
 
         $totalCorrectWeighted = 0.0;
         $totalMaxWeighted     = 0.0;
@@ -111,10 +101,17 @@ class AssessmentService
             }
 
             // Determine which dimension this question belongs to
-            $categoryKey = $question->trait ?? 'general';
-            if (!isset($categoryData[$categoryKey])) {
-                // If we encounter an unexpected trait, group it under "general"
-                $categoryKey = 'general';
+            $categoryKey = $question->trait;
+            
+            // Skip questions without a trait or with invalid traits
+            if (empty($categoryKey) || !isset($categoryData[$categoryKey])) {
+                // Log warning for questions without proper trait assignment
+                \Log::warning("Aptitude question missing or invalid trait", [
+                    'question_id' => $question->id,
+                    'question_text' => $question->question_text,
+                    'trait' => $categoryKey,
+                ]);
+                continue; // Skip this question
             }
 
             // Handle multiple-choice questions (weighted scoring)
@@ -156,7 +153,7 @@ class AssessmentService
             }
         }
 
-        // Build normalized dimension results
+        // Build normalized dimension results (only include dimensions with data)
         $dimensions = [];
 
         foreach ($categoryData as $key => $data) {
@@ -167,18 +164,18 @@ class AssessmentService
                 $accuracy = round(($data['correct_points'] / $maxPoints) * 100);
             }
 
-            // Use explicit label if defined, fall back to generated
-            $label = $data['label']
-                ?? ucfirst(str_replace('_', ' ', $key));
-
-            $dimensions[$key] = [
-                'label'               => $label,
-                'accuracy'            => $accuracy,                 // weighted %
-                'correct_points'      => $data['correct_points'],   // weighted earned
-                'max_points'          => $data['max_points'],       // weighted max
-                'evaluated_questions' => $data['evaluated_questions'],
-                'open_responses'      => $data['open_responses'],
-            ];
+            // Only include dimensions that have evaluated questions
+            // This filters out empty dimensions and prevents "General" from appearing
+            if ($data['evaluated_questions'] > 0 || count($data['open_responses']) > 0) {
+                $dimensions[$key] = [
+                    'label'               => $data['label'],
+                    'accuracy'            => $accuracy,                 // weighted %
+                    'correct_points'      => $data['correct_points'],   // weighted earned
+                    'max_points'          => $data['max_points'],       // weighted max
+                    'evaluated_questions' => $data['evaluated_questions'],
+                    'open_responses'      => $data['open_responses'],
+                ];
+            }
         }
 
         // Overall weighted accuracy
