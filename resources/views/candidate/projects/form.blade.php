@@ -397,7 +397,10 @@
                 // Track project submission with Mixpanel (if available)
                 if (typeof trackEvent === 'function') {
                     trackEvent('Project Submitted', {
-                        projectId: result.project?.id ?? null,
+                        project_id: result.project?.id ?? null,
+                        projectId: result.project?.id ?? null, // Keep both for backwards compatibility
+                        form_id: result.project?.id ?? null, // Projects are stored as forms
+                        is_new_project: !window.location.pathname.includes('/edit'),
                     });
                 }
                 

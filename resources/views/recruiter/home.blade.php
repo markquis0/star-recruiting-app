@@ -180,11 +180,12 @@
             // Track recruiter search with Mixpanel (if available)
             if (typeof trackEvent === 'function' && data.candidates) {
                 trackEvent('Recruiter Search Performed', {
-                    role: params.get('role') || null,
-                    years_exp: params.get('years_exp') ? parseInt(params.get('years_exp'), 10) : null,
-                    behavioral_category: params.get('behavioral_category') || null,
-                    aptitude_category: params.get('aptitude_category') || null,
+                    search_role: params.get('role') || null,
+                    search_years_exp: params.get('years_exp') ? parseInt(params.get('years_exp'), 10) : null,
+                    search_behavioral_category: params.get('behavioral_category') || null,
+                    search_aptitude_category: params.get('aptitude_category') || null,
                     results_count: data.candidates.length,
+                    has_results: data.candidates.length > 0,
                 });
             }
 
@@ -244,7 +245,8 @@
                 // Track candidate save with Mixpanel (if available)
                 if (typeof trackEvent === 'function') {
                     trackEvent('Candidate Saved', {
-                        candidateId: candidateId,
+                        candidate_id: candidateId,
+                        candidateId: candidateId, // Keep both for backwards compatibility
                         context: 'recruiter_dashboard',
                     });
                 }
@@ -301,7 +303,8 @@
                 // Track candidate removal with Mixpanel (if available)
                 if (typeof trackEvent === 'function') {
                     trackEvent('Candidate Removed From Saved', {
-                        savedCandidateId: savedCandidateId,
+                        saved_candidate_id: savedCandidateId,
+                        savedCandidateId: savedCandidateId, // Keep both for backwards compatibility
                         context: 'recruiter_dashboard',
                     });
                 }

@@ -157,36 +157,46 @@ document.getElementById('register-form').addEventListener('submit', async functi
             localStorage.setItem('api_token', result.token);
             localStorage.setItem('user_role', result.user.role);
             
-            // Track registration events with Mixpanel (if available)
+            // Track registration event with Mixpanel (if available)
+            // Single event with role property (no duplicate events)
             if (result && result.user && typeof trackEvent === 'function') {
+                console.log('[Mixpanel] Tracking registration for user:', result.user.id, 'role:', result.user.role);
+
                 trackEvent('User Registered', {
                     userId: result.user.id,
+                    user_id: result.user.id, // Also include user_id for consistency
                     role: result.user.role || 'unknown',
+                    registration_method: 'web_form',
                 });
-
-                if (result.user.role === 'candidate') {
-                    trackEvent('Candidate Registered', {
-                        userId: result.user.id,
-                    });
-                } else if (result.user.role === 'recruiter') {
-                    trackEvent('Recruiter Registered', {
-                        userId: result.user.id,
-                    });
-                }
+                
+                // Give Mixpanel time to send events before redirect
+                setTimeout(() => {
+                    if (result.user.role === 'candidate') {
+                        window.location.href = '/candidate/home';
+                    } else {
+                        window.location.href = '/recruiter/home';
+                    }
+                }, 2000); // Increased from 1500ms to give events time to flush
+            } else {
+                console.warn('[Mixpanel] trackEvent not available or missing user data', {
+                    hasResult: !!result,
+                    hasUser: !!(result && result.user),
+                    trackEventType: typeof trackEvent
+                });
+                
+                // Fallback redirect if no tracking
+                setTimeout(() => {
+                    if (result.user.role === 'candidate') {
+                        window.location.href = '/candidate/home';
+                    } else {
+                        window.location.href = '/recruiter/home';
+                    }
+                }, 1500);
             }
             
             document.getElementById('register-error').style.display = 'none';
             document.getElementById('register-success').innerHTML = 'Registration successful! Redirecting...';
             document.getElementById('register-success').style.display = 'block';
-            
-            // Redirect based on role
-            setTimeout(() => {
-                if (result.user.role === 'candidate') {
-                    window.location.href = '/candidate/home';
-                } else {
-                    window.location.href = '/recruiter/home';
-                }
-            }, 1500);
         } else {
             document.getElementById('register-success').style.display = 'none';
             

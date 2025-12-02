@@ -257,7 +257,10 @@
                     const type = params.get('type') || 'unknown';
 
                     trackEvent('Assessment Completed', {
-                        assessmentType: type,
+                        assessment_type: type,
+                        assessmentType: type, // Keep both for backwards compatibility
+                        form_id: formId || null,
+                        assessment_id: result.assessment?.id || null,
                     });
                 }
 
@@ -290,9 +293,12 @@
         if (typeof trackEvent === 'function') {
             const params = new URLSearchParams(window.location.search);
             const type = params.get('type') || 'unknown';
+            const formId = window.location.pathname.split('/').pop();
 
             trackEvent('Assessment Started', {
-                assessmentType: type,
+                assessment_type: type,
+                assessmentType: type, // Keep both for backwards compatibility
+                form_id: formId !== 'assessment' ? formId : null,
             });
         }
     });

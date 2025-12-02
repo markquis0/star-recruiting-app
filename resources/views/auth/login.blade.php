@@ -87,7 +87,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result && result.user && typeof trackEvent === 'function') {
                     trackEvent('User Logged In', {
                         userId: result.user.id,
+                        user_id: result.user.id,
                         role: result.user.role || 'unknown',
+                        login_method: 'web_form',
                     });
                 }
                 

@@ -551,6 +551,8 @@
                     $profile = $user->candidate ?? $user->recruiter ?? null;
                     $userName = '';
                     $userEmail = '';
+                    $profileId = null;
+                    
                     if ($profile) {
                         if (isset($profile->first_name)) {
                             $userName = $profile->first_name . ' ' . ($profile->last_name ?? '');
@@ -558,31 +560,136 @@
                         if (isset($profile->email) && $profile->email) {
                             $userEmail = $profile->email;
                         }
+                        $profileId = $profile->id ?? null;
                     }
                 @endphp
+                // Identify the user
                 mixpanel.identify("{{ $user->id }}");
+                
+                // Set user properties in Mixpanel People
                 mixpanel.people.set({
+                    "$user_id": "{{ $user->id }}",
                     "User ID": "{{ $user->id }}",
                     @if(!empty($userEmail))
+                    "$email": "{{ $userEmail }}",
                     "Email": "{{ $userEmail }}",
                     @endif
                     @if(!empty($userName))
+                    "$name": "{{ $userName }}",
                     "Name": "{{ $userName }}",
                     @endif
                     "Role": "{{ $user->role ?? 'unknown' }}",
+                    @if($user->role === 'candidate' && $profileId)
+                    "Candidate ID": "{{ $profileId }}",
+                    @elseif($user->role === 'recruiter' && $profileId)
+                    "Recruiter ID": "{{ $profileId }}",
+                    @endif
+                    "Username": "{{ $user->username ?? '' }}",
+                    "Last Active": new Date().toISOString(),
+                });
+                
+                // Set super properties for this user session
+                mixpanel.register_once({
+                    "user_id": "{{ $user->id }}",
+                    "user_role": "{{ $user->role ?? 'unknown' }}",
                 });
             @endauth
 
+            // Register super properties (included with every event)
             mixpanel.register({
                 "App Version": "{{ config('app.version', '1.0') }}",
                 "Environment": "{{ app()->environment() }}",
+                "App Name": "Star Recruiting",
             });
 
-            // Global trackEvent helper function
+            // Helper to get current page name from URL
+            function getCurrentPage() {
+                const path = window.location.pathname;
+                const pageMap = {
+                    '/': 'home',
+                    '/login': 'login',
+                    '/register': 'register',
+                    '/candidate/home': 'candidate_dashboard',
+                    '/candidate/settings': 'candidate_settings',
+                    '/candidate/projects': 'candidate_projects',
+                    '/candidate/projects/new': 'candidate_project_form',
+                    '/recruiter/home': 'recruiter_dashboard',
+                    '/recruiter/settings': 'recruiter_settings',
+                };
+                
+                // Check exact matches first
+                if (pageMap[path]) {
+                    return pageMap[path];
+                }
+                
+                // Check for dynamic routes
+                if (path.startsWith('/candidate/projects/') && path !== '/candidate/projects/new') {
+                    return 'candidate_project_edit';
+                }
+                if (path.startsWith('/candidate/assessment/')) {
+                    return 'candidate_assessment';
+                }
+                if (path.startsWith('/recruiter/candidate/')) {
+                    return 'recruiter_candidate_view';
+                }
+                if (path.startsWith('/profile/')) {
+                    return 'public_profile';
+                }
+                
+                // Fallback: use pathname
+                return path.replace(/^\//, '').replace(/\//g, '_') || 'unknown';
+            }
+
+            // Helper to get user info from localStorage
+            function getUserInfo() {
+                try {
+                    const token = localStorage.getItem('api_token');
+                    const role = localStorage.getItem('user_role');
+                    return {
+                        hasToken: !!token,
+                        role: role || null,
+                    };
+                } catch (e) {
+                    return { hasToken: false, role: null };
+                }
+            }
+
+            // Enhanced global trackEvent helper function with automatic properties
             function trackEvent(eventName, eventData = {}) {
                 if (typeof mixpanel !== 'undefined' && mixpanel.track) {
                     try {
-                        mixpanel.track(eventName, eventData);
+                        // Get user info
+                        const userInfo = getUserInfo();
+                        const currentPage = getCurrentPage();
+                        
+                        // Build enriched event data with automatic properties
+                        const enrichedData = {
+                            // User properties
+                            ...(userInfo.hasToken && userInfo.role ? { role: userInfo.role } : {}),
+                            
+                            // Page context
+                            page: currentPage,
+                            url: window.location.pathname,
+                            
+                            // Timestamp (Mixpanel adds this automatically, but we include for clarity)
+                            timestamp: new Date().toISOString(),
+                            
+                            // Custom event data (user-provided properties override defaults)
+                            ...eventData,
+                        };
+                        
+                        // If userId is provided in eventData, ensure it's set
+                        if (eventData.userId) {
+                            enrichedData.user_id = eventData.userId;
+                        }
+                        
+                        // Track the event with enriched data
+                        mixpanel.track(eventName, enrichedData);
+                        
+                        // Debug logging in development
+                        if ({{ app()->environment('local') ? 'true' : 'false' }}) {
+                            console.log('[Mixpanel] Event tracked:', eventName, enrichedData);
+                        }
                     } catch (e) {
                         console.error("[Mixpanel] Error tracking event:", e);
                     }
@@ -593,6 +700,16 @@
 
             // Make trackEvent available globally
             window.trackEvent = trackEvent;
+            
+            // Auto-track page views on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                const currentPage = getCurrentPage();
+                if (currentPage !== 'unknown') {
+                    trackEvent('Page Viewed', {
+                        page: currentPage,
+                    });
+                }
+            });
         } catch (e) {
             console.error("[Mixpanel] Initialization error:", e);
         }
