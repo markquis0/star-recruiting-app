@@ -157,6 +157,24 @@ document.getElementById('register-form').addEventListener('submit', async functi
             localStorage.setItem('api_token', result.token);
             localStorage.setItem('user_role', result.user.role);
             
+            // Track registration events with Mixpanel (if available)
+            if (result && result.user && typeof trackEvent === 'function') {
+                trackEvent('User Registered', {
+                    userId: result.user.id,
+                    role: result.user.role || 'unknown',
+                });
+
+                if (result.user.role === 'candidate') {
+                    trackEvent('Candidate Registered', {
+                        userId: result.user.id,
+                    });
+                } else if (result.user.role === 'recruiter') {
+                    trackEvent('Recruiter Registered', {
+                        userId: result.user.id,
+                    });
+                }
+            }
+            
             document.getElementById('register-error').style.display = 'none';
             document.getElementById('register-success').innerHTML = 'Registration successful! Redirecting...';
             document.getElementById('register-success').style.display = 'block';

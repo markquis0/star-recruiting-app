@@ -83,6 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('api_token', result.token);
                 localStorage.setItem('user_role', result.user.role);
                 
+                // Track login event with Mixpanel (if available)
+                if (result && result.user && typeof trackEvent === 'function') {
+                    trackEvent('User Logged In', {
+                        userId: result.user.id,
+                        role: result.user.role || 'unknown',
+                    });
+                }
+                
                 document.getElementById('login-error').style.display = 'none';
                 document.getElementById('login-success').innerHTML = 'Login successful! Redirecting...';
                 document.getElementById('login-success').style.display = 'block';
