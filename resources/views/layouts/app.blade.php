@@ -712,13 +712,117 @@
             // Make trackEvent available globally
             window.trackEvent = trackEvent;
             
-            // Auto-track page views on page load
+            // Function to identify user in Mixpanel (for token-based auth)
+            async function identifyUserInMixpanel() {
+                try {
+                    const token = localStorage.getItem('api_token');
+                    const userRole = localStorage.getItem('user_role');
+                    
+                    if (!token || !userRole) {
+                        return; // Not logged in
+                    }
+                    
+                    // Determine which endpoint to use based on role
+                    const profileEndpoint = userRole === 'candidate' 
+                        ? '/api/candidate/profile' 
+                        : '/api/recruiter/profile';
+                    
+                    // Fetch user profile data
+                    const response = await fetch(profileEndpoint, {
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    if (response.status === 401) {
+                        // Token invalid, clear storage
+                        localStorage.removeItem('api_token');
+                        localStorage.removeItem('user_role');
+                        return;
+                    }
+                    
+                    if (!response.ok) {
+                        return; // Failed to get user data
+                    }
+                    
+                    const data = await response.json();
+                    const user = data.user;
+                    const profile = data.candidate || data.recruiter;
+                    
+                    if (!user) {
+                        return; // No user data
+                    }
+                    
+                    // Build user name
+                    let userName = '';
+                    if (profile) {
+                        if (profile.first_name || profile.last_name) {
+                            userName = [profile.first_name, profile.last_name].filter(Boolean).join(' ');
+                        }
+                    }
+                    
+                    // Identify the user
+                    const distinctId = 'user_' + user.id;
+                    mixpanel.identify(distinctId);
+                    
+                    // Set user profile properties
+                    const userProps = {
+                        "$user_id": String(user.id),
+                        "User ID": String(user.id),
+                        "Username": user.username || '',
+                        "Role": user.role || userRole || 'unknown',
+                    };
+                    
+                    // Add name if available
+                    if (userName) {
+                        userProps["$name"] = userName;
+                        userProps["Name"] = userName;
+                    }
+                    
+                    // Add email if available (recruiters)
+                    if (profile && profile.email) {
+                        userProps["$email"] = profile.email;
+                        userProps["Email"] = profile.email;
+                    }
+                    
+                    // Add profile ID
+                    if (profile && profile.id) {
+                        if (user.role === 'candidate') {
+                            userProps["Candidate ID"] = profile.id;
+                        } else if (user.role === 'recruiter') {
+                            userProps["Recruiter ID"] = profile.id;
+                        }
+                    }
+                    
+                    // Set properties in Mixpanel People
+                    mixpanel.people.set(userProps);
+                    
+                    // Register super properties for this session
+                    mixpanel.register({
+                        "user_id": String(user.id),
+                        "user_role": user.role || userRole || 'unknown',
+                    });
+                    
+                    console.log('[Mixpanel] User identified on page load:', distinctId);
+                } catch (e) {
+                    console.error('[Mixpanel] Error identifying user on page load:', e);
+                }
+            }
+            
+            // Auto-track page views and identify user on page load
             document.addEventListener('DOMContentLoaded', function() {
                 const currentPage = getCurrentPage();
                 if (currentPage !== 'unknown') {
                     trackEvent('Page Viewed', {
                         page: currentPage,
                     });
+                }
+                
+                // Identify user if they have a token (for token-based auth)
+                // This runs after Mixpanel is loaded
+                if (typeof mixpanel !== 'undefined' && mixpanel.identify) {
+                    identifyUserInMixpanel();
                 }
             });
         } catch (e) {
