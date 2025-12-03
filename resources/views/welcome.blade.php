@@ -322,7 +322,7 @@
     <!-- Navbar -->
     <nav class="landing-navbar">
         <a href="/" class="landing-navbar-brand">
-            <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" onerror="this.style.display='none';">
+            <img src="{{ secure_asset('images/star-recruiting-logo.png') }}?v=2" alt="Star Recruiting Logo" onerror="this.style.display='none';">
         </a>
         <div class="landing-navbar-links">
             <a href="#features">Features</a>

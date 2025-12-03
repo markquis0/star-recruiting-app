@@ -849,7 +849,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="/" id="home-link">
-                <img src="{{ secure_asset('images/star-recruiting-logo.png') }}" alt="Star Recruiting Logo" id="logo-img" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='inline';">
+                <img src="{{ secure_asset('images/star-recruiting-logo.png') }}?v=2" alt="Star Recruiting Logo" id="logo-img" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='inline';">
                 <span id="logo-text" style="display: none;">star recruiting</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
