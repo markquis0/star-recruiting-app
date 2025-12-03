@@ -71,14 +71,30 @@ class AuthController extends Controller
                     throw new \Exception('Failed to generate authentication token: ' . $tokenException->getMessage());
                 }
 
+                // Load profile data for Mixpanel identification
+                $user->load($request->role === 'candidate' ? 'candidate' : 'recruiter');
+                $profile = $request->role === 'candidate' ? $user->candidate : $user->recruiter;
+                
+                $userData = [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'role' => $user->role,
+                ];
+                
+                // Add profile data if available
+                if ($profile) {
+                    $userData['first_name'] = $profile->first_name ?? null;
+                    $userData['last_name'] = $profile->last_name ?? null;
+                    $userData['name'] = trim(($profile->first_name ?? '') . ' ' . ($profile->last_name ?? ''));
+                    if ($request->role === 'recruiter' && isset($profile->email)) {
+                        $userData['email'] = $profile->email;
+                    }
+                }
+
                 return response()->json([
                     'message' => 'Registration successful',
                     'token' => $token,
-                    'user' => [
-                        'id' => $user->id,
-                        'username' => $user->username,
-                        'role' => $user->role,
-                    ],
+                    'user' => $userData,
                 ], 201);
             });
         } catch (\Exception $e) {
@@ -160,15 +176,31 @@ class AuthController extends Controller
                 ], 500);
             }
 
+            // Load profile data for Mixpanel identification
+            $user->load($user->role === 'candidate' ? 'candidate' : 'recruiter');
+            $profile = $user->role === 'candidate' ? $user->candidate : $user->recruiter;
+            
+            $userData = [
+                'id' => $user->id,
+                'username' => $user->username,
+                'role' => $user->role,
+            ];
+            
+            // Add profile data if available
+            if ($profile) {
+                $userData['first_name'] = $profile->first_name ?? null;
+                $userData['last_name'] = $profile->last_name ?? null;
+                $userData['name'] = trim(($profile->first_name ?? '') . ' ' . ($profile->last_name ?? ''));
+                if ($user->role === 'recruiter' && isset($profile->email)) {
+                    $userData['email'] = $profile->email;
+                }
+            }
+
             Log::info('Login: Success, returning response', ['user_id' => $user->id, 'role' => $user->role]);
             return response()->json([
                 'message' => 'Login successful',
                 'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'role' => $user->role,
-                ],
+                'user' => $userData,
             ]);
         } catch (\Exception $e) {
             Log::error('Login error: ' . $e->getMessage(), [

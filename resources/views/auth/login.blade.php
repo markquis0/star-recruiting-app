@@ -83,6 +83,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('api_token', result.token);
                 localStorage.setItem('user_role', result.user.role);
                 
+                // Identify user in Mixpanel and set profile properties
+                if (result && result.user && typeof mixpanel !== 'undefined' && mixpanel.identify) {
+                    try {
+                        // Identify the user
+                        mixpanel.identify(String(result.user.id));
+                        
+                        // Set user profile properties
+                        const userProps = {
+                            "$user_id": String(result.user.id),
+                            "User ID": String(result.user.id),
+                            "Username": result.user.username || '',
+                            "Role": result.user.role || 'unknown',
+                        };
+                        
+                        // Add name if available
+                        if (result.user.name) {
+                            userProps["$name"] = result.user.name;
+                            userProps["Name"] = result.user.name;
+                        } else if (result.user.first_name || result.user.last_name) {
+                            const fullName = [result.user.first_name, result.user.last_name].filter(Boolean).join(' ');
+                            if (fullName) {
+                                userProps["$name"] = fullName;
+                                userProps["Name"] = fullName;
+                            }
+                        }
+                        
+                        // Add email if available (recruiters)
+                        if (result.user.email) {
+                            userProps["$email"] = result.user.email;
+                            userProps["Email"] = result.user.email;
+                        }
+                        
+                        // Set properties in Mixpanel People
+                        mixpanel.people.set(userProps);
+                        
+                        // Register super properties for this session
+                        mixpanel.register({
+                            "user_id": String(result.user.id),
+                            "user_role": result.user.role || 'unknown',
+                        });
+                        
+                        console.log('[Mixpanel] User identified:', result.user.id);
+                    } catch (e) {
+                        console.error('[Mixpanel] Error identifying user:', e);
+                    }
+                }
+                
                 // Track login event with Mixpanel (if available)
                 if (result && result.user && typeof trackEvent === 'function') {
                     trackEvent('User Logged In', {
