@@ -551,6 +551,14 @@
                 debug: {{ app()->environment('local') ? 'true' : 'false' }},
                 loaded: function(mixpanel) {
                     console.log("[Mixpanel] Initialized successfully");
+                    
+                    // Identify user immediately after Mixpanel loads
+                    // This ensures Mixpanel is fully ready before we try to identify
+                    setTimeout(function() {
+                        if (typeof identifyUserInMixpanel === 'function') {
+                            identifyUserInMixpanel();
+                        }
+                    }, 100);
                 }
             });
 
@@ -810,7 +818,7 @@
                 }
             }
             
-            // Auto-track page views and identify user on page load
+            // Auto-track page views on page load
             document.addEventListener('DOMContentLoaded', function() {
                 const currentPage = getCurrentPage();
                 if (currentPage !== 'unknown') {
@@ -819,11 +827,20 @@
                     });
                 }
                 
-                // Identify user if they have a token (for token-based auth)
-                // This runs after Mixpanel is loaded
-                if (typeof mixpanel !== 'undefined' && mixpanel.identify) {
-                    identifyUserInMixpanel();
+                // Fallback: Try to identify user if Mixpanel is already loaded
+                // (Primary identification happens in Mixpanel's loaded callback)
+                function tryIdentifyUser() {
+                    if (typeof mixpanel !== 'undefined' && mixpanel.identify && typeof identifyUserInMixpanel === 'function') {
+                        // Mixpanel is ready, try to identify
+                        identifyUserInMixpanel();
+                    } else if (typeof mixpanel !== 'undefined') {
+                        // Mixpanel exists but might not be fully loaded yet, wait a bit
+                        setTimeout(tryIdentifyUser, 200);
+                    }
                 }
+                
+                // Start trying after a short delay
+                setTimeout(tryIdentifyUser, 500);
             });
         } catch (e) {
             console.error("[Mixpanel] Initialization error:", e);
