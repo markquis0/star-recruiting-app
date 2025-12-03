@@ -550,15 +550,23 @@
             mixpanel.init("{{ $mixpanelToken }}", {
                 debug: {{ app()->environment('local') ? 'true' : 'false' }},
                 loaded: function(mixpanel) {
-                    console.log("[Mixpanel] Initialized successfully");
+                    console.log("[Mixpanel] Loaded - now identifying user");
                     
-                    // Identify user immediately after Mixpanel loads
-                    // This ensures Mixpanel is fully ready before we try to identify
+                    // CRITICAL: Identify user FIRST, before any events fire
+                    // This ensures all events are associated with the user ID, not $device_id
+                    if (typeof identifyUserInMixpanel === 'function') {
+                        identifyUserInMixpanel();
+                    }
+                    
+                    // Delay page view event so user is identified first
                     setTimeout(function() {
-                        if (typeof identifyUserInMixpanel === 'function') {
-                            identifyUserInMixpanel();
+                        const currentPage = getCurrentPage();
+                        if (currentPage !== 'unknown') {
+                            trackEvent('Page Viewed', {
+                                page: currentPage,
+                            });
                         }
-                    }, 100);
+                    }, 200);
                 }
             });
 
@@ -818,30 +826,9 @@
                 }
             }
             
-            // Auto-track page views on page load
-            document.addEventListener('DOMContentLoaded', function() {
-                const currentPage = getCurrentPage();
-                if (currentPage !== 'unknown') {
-                    trackEvent('Page Viewed', {
-                        page: currentPage,
-                    });
-                }
-                
-                // Fallback: Try to identify user if Mixpanel is already loaded
-                // (Primary identification happens in Mixpanel's loaded callback)
-                function tryIdentifyUser() {
-                    if (typeof mixpanel !== 'undefined' && mixpanel.identify && typeof identifyUserInMixpanel === 'function') {
-                        // Mixpanel is ready, try to identify
-                        identifyUserInMixpanel();
-                    } else if (typeof mixpanel !== 'undefined') {
-                        // Mixpanel exists but might not be fully loaded yet, wait a bit
-                        setTimeout(tryIdentifyUser, 200);
-                    }
-                }
-                
-                // Start trying after a short delay
-                setTimeout(tryIdentifyUser, 500);
-            });
+            // Note: Page Viewed event is now tracked in Mixpanel's loaded callback
+            // to ensure it fires AFTER user identification
+            // This prevents events from being associated with $device_id instead of user_id
         } catch (e) {
             console.error("[Mixpanel] Initialization error:", e);
         }
